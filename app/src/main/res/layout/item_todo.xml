@@ -1,15 +1,51 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:orientation="horizontal"
-    android:padding="12dp"
-    android:background="?attr/selectableItemBackground">
+    android:layout_marginBottom="10dp"
+    app:cardBackgroundColor="#1E1E1E"
+    app:cardCornerRadius="12dp"
+    app:cardElevation="0dp"
+    app:cardUseCompatPadding="false"
+    app:contentPadding="4dp">
 
-    <TextView
-        android:id="@+id/task_text"
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:textSize="16sp"/>
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:paddingHorizontal="12dp"
+        android:paddingVertical="14dp">
 
-</LinearLayout>
+        <!-- Checkbox -->
+        <CheckBox
+            android:id="@+id/checkbox"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:buttonTint="#7C3AED"
+            android:layout_marginEnd="12dp" />
+
+        <!-- Task text -->
+        <TextView
+            android:id="@+id/task_text"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:textSize="15sp"
+            android:textColor="#E0E0E0"
+            android:fontFamily="sans-serif" />
+
+        <!-- Delete button -->
+        <TextView
+            android:id="@+id/btn_delete"
+            android:layout_width="28dp"
+            android:layout_height="28dp"
+            android:text="🗑"
+            android:textSize="14sp"
+            android:gravity="center"
+            android:layout_marginStart="8dp" />
+
+    </LinearLayout>
+
+</androidx.cardview.widget.CardView>
