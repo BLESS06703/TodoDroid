@@ -7,11 +7,10 @@
     android:gravity="center"
     android:padding="24dp">
 
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="📝"
-        android:textSize="48sp"
+    <View
+        android:layout_width="56dp"
+        android:layout_height="56dp"
+        android:background="@drawable/notes_icon_bg"
         android:layout_marginBottom="16dp" />
 
     <TextView
