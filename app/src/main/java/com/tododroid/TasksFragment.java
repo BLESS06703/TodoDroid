@@ -15,7 +15,7 @@ import java.util.ArrayList;
 
 public class TasksFragment extends Fragment {
     
-    private ArrayList<String> todoList;
+    private ArrayList<TaskItem> items;
     private TodoAdapter adapter;
     private EditText inputTask;
     private ImageButton btnAddTask;
@@ -27,22 +27,22 @@ public class TasksFragment extends Fragment {
                              @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_tasks, container, false);
         
-        todoList = new ArrayList<>();
+        items = new ArrayList<>();
         
         inputTask = view.findViewById(R.id.input_task);
         btnAddTask = view.findViewById(R.id.btn_add_task);
         recyclerTasks = view.findViewById(R.id.recycler_tasks);
         
         recyclerTasks.setLayoutManager(new LinearLayoutManager(getContext()));
-        adapter = new TodoAdapter(todoList);
+        adapter = new TodoAdapter(items);
         recyclerTasks.setAdapter(adapter);
         
         btnAddTask.setOnClickListener(v -> {
             String task = inputTask.getText().toString().trim();
             if (!task.isEmpty()) {
-                todoList.add(task);
-                adapter.notifyItemInserted(todoList.size() - 1);
+                adapter.addTask(task);
                 inputTask.setText("");
+                recyclerTasks.smoothScrollToPosition(adapter.getItemCount() - 1);
             }
         });
         
