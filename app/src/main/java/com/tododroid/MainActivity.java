@@ -79,7 +79,7 @@ public class MainActivity extends AppCompatActivity {
         
         PopupWindow popup = new PopupWindow(
             popupView,
-            240,
+            280,
             android.view.ViewGroup.LayoutParams.WRAP_CONTENT,
             true
         );
@@ -87,8 +87,8 @@ public class MainActivity extends AppCompatActivity {
         popup.setElevation(16f);
         popup.setOverlapAnchor(true);
         
-        // Show below the sort button
-        popup.showAsDropDown(anchor, -160, 12, Gravity.TOP | Gravity.END);
+        // Position: right-aligned below the sort button
+        popup.showAsDropDown(anchor, -210, 16, Gravity.TOP | Gravity.END);
         
         // Get views
         LinearLayout sortLatest = popupView.findViewById(R.id.sort_latest);
@@ -98,11 +98,9 @@ public class MainActivity extends AppCompatActivity {
         TextView viewList = popupView.findViewById(R.id.view_list);
         TextView viewCard = popupView.findViewById(R.id.view_card);
         
-        // Get the text views inside sort items
         TextView sortLatestText = (TextView) sortLatest.getChildAt(0);
         TextView sortOldestText = (TextView) sortOldest.getChildAt(0);
         
-        // Sort selection with checkmarks
         sortLatest.setOnClickListener(v -> {
             sortLatestText.setTextColor(0xFFFFFFFF);
             checkLatest.setVisibility(View.VISIBLE);
@@ -121,7 +119,6 @@ public class MainActivity extends AppCompatActivity {
             popup.dismiss();
         });
         
-        // View toggle with capsule style
         viewList.setOnClickListener(v -> {
             viewList.setBackgroundResource(R.drawable.segment_selected);
             viewList.setTextColor(0xFFFFFFFF);
