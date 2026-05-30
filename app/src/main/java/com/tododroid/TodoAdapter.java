@@ -18,6 +18,8 @@ import java.util.concurrent.TimeUnit;
 public class TodoAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     
     private ArrayList<TaskItem> items;
+    private SimpleDateFormat timeFormat = new SimpleDateFormat("hh:mm a", Locale.getDefault());
+    private SimpleDateFormat dateFormat = new SimpleDateFormat("MMM d, hh:mm a", Locale.getDefault());
     
     public TodoAdapter(ArrayList<TaskItem> items) {
         this.items = items;
@@ -37,12 +39,13 @@ public class TodoAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     }
     
     public static class TaskViewHolder extends RecyclerView.ViewHolder {
-        public TextView taskText;
+        public TextView taskText, taskTime;
         public CheckBox checkbox;
         public ImageButton btnDelete;
         public TaskViewHolder(View itemView) {
             super(itemView);
             taskText = itemView.findViewById(R.id.task_text);
+            taskTime = itemView.findViewById(R.id.task_time);
             checkbox = itemView.findViewById(R.id.checkbox);
             btnDelete = itemView.findViewById(R.id.btn_delete);
         }
@@ -71,6 +74,7 @@ public class TodoAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         else if (holder instanceof TaskViewHolder) {
             TaskViewHolder t = (TaskViewHolder) holder;
             t.taskText.setText(item.getTaskText());
+            t.taskTime.setText(formatTime(item.getTimestamp()));
             
             t.checkbox.setOnCheckedChangeListener(null);
             t.checkbox.setChecked(item.isCompleted());
@@ -80,10 +84,12 @@ public class TodoAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
                     t.taskText.setPaintFlags(
                         t.taskText.getPaintFlags() | android.graphics.Paint.STRIKE_THRU_TEXT_FLAG);
                     t.taskText.setTextColor(0xFF666666);
+                    t.taskTime.setTextColor(0xFF444444);
                 } else {
                     t.taskText.setPaintFlags(
                         t.taskText.getPaintFlags() & ~android.graphics.Paint.STRIKE_THRU_TEXT_FLAG);
                     t.taskText.setTextColor(0xFFE0E0E0);
+                    t.taskTime.setTextColor(0xFF666666);
                 }
             });
             
@@ -91,6 +97,7 @@ public class TodoAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
                 t.taskText.setPaintFlags(
                     t.taskText.getPaintFlags() | android.graphics.Paint.STRIKE_THRU_TEXT_FLAG);
                 t.taskText.setTextColor(0xFF666666);
+                t.taskTime.setTextColor(0xFF444444);
             }
             
             t.btnDelete.setOnClickListener(v -> {
@@ -109,6 +116,20 @@ public class TodoAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
                         .show();
                 }
             });
+        }
+    }
+    
+    private String formatTime(long timestamp) {
+        long now = System.currentTimeMillis();
+        long diff = now - timestamp;
+        long hours = TimeUnit.MILLISECONDS.toHours(diff);
+        
+        if (hours < 24) {
+            return "Today at " + timeFormat.format(new Date(timestamp));
+        } else if (hours < 48) {
+            return "Yesterday at " + timeFormat.format(new Date(timestamp));
+        } else {
+            return dateFormat.format(new Date(timestamp));
         }
     }
     
