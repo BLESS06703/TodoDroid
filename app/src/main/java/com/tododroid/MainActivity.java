@@ -4,6 +4,7 @@ import android.os.Bundle;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.PopupWindow;
@@ -19,7 +20,8 @@ public class MainActivity extends AppCompatActivity {
     
     private DrawerLayout drawerLayout;
     private NavigationView navView;
-    private ImageButton btnMenu, btnSort;
+    private ImageButton btnMenu, btnSort, btnCreate;
+    private EditText searchInput;
     private TextView tabTasks, tabNotes;
     private ViewPager2 viewPager;
     
@@ -32,6 +34,8 @@ public class MainActivity extends AppCompatActivity {
         navView = findViewById(R.id.nav_view);
         btnMenu = findViewById(R.id.btn_menu);
         btnSort = findViewById(R.id.btn_sort);
+        btnCreate = findViewById(R.id.btn_create);
+        searchInput = findViewById(R.id.search_input);
         tabTasks = findViewById(R.id.tab_tasks);
         tabNotes = findViewById(R.id.tab_notes);
         viewPager = findViewById(R.id.view_pager);
@@ -58,6 +62,12 @@ public class MainActivity extends AppCompatActivity {
         
         btnSort.setOnClickListener(v -> showSortPopup(v));
         
+        // Create button - focuses the search or switches to tasks tab
+        btnCreate.setOnClickListener(v -> {
+            viewPager.setCurrentItem(0);
+            searchInput.requestFocus();
+        });
+        
         navView.setNavigationItemSelectedListener(item -> {
             int id = item.getItemId();
             if (id == R.id.nav_tasks) viewPager.setCurrentItem(0);
@@ -74,7 +84,7 @@ public class MainActivity extends AppCompatActivity {
         
         int width = (int) (300 * getResources().getDisplayMetrics().density);
         
-        PopupWindow popup = new PopupWindow(popupView, width, 
+        PopupWindow popup = new PopupWindow(popupView, width,
             LinearLayout.LayoutParams.WRAP_CONTENT, true);
         popup.setBackgroundDrawable(new android.graphics.drawable.ColorDrawable(
             android.graphics.Color.TRANSPARENT));
@@ -82,14 +92,10 @@ public class MainActivity extends AppCompatActivity {
         
         int[] location = new int[2];
         anchor.getLocationOnScreen(location);
-        int anchorX = location[0];
-        int anchorY = location[1];
-        
         popup.showAtLocation(anchor, Gravity.NO_GRAVITY,
-            anchorX - width + anchor.getWidth(),
-            anchorY + anchor.getHeight() + 12);
+            location[0] - width + anchor.getWidth(),
+            location[1] + anchor.getHeight() + 12);
         
-        // Views
         LinearLayout sortLatest = popupView.findViewById(R.id.sort_latest);
         LinearLayout sortOldest = popupView.findViewById(R.id.sort_oldest);
         TextView checkLatest = popupView.findViewById(R.id.check_latest);
