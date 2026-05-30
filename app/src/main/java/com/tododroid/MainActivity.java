@@ -3,13 +3,12 @@ package com.tododroid;
 import android.os.Bundle;
 import android.view.Gravity;
 import android.view.LayoutInflater;
-import android.view.MenuItem;
 import android.view.View;
 import android.widget.ImageButton;
+import android.widget.LinearLayout;
 import android.widget.PopupWindow;
 import android.widget.TextView;
 import android.widget.Toast;
-import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
@@ -57,7 +56,6 @@ public class MainActivity extends AppCompatActivity {
             }
         });
         
-        // Sort button - show popup
         btnSort.setOnClickListener(v -> showSortPopup(v));
         
         navView.setNavigationItemSelectedListener(item -> {
@@ -78,50 +76,67 @@ public class MainActivity extends AppCompatActivity {
     
     private void showSortPopup(View anchor) {
         View popupView = LayoutInflater.from(this).inflate(R.layout.popup_sort_menu, null);
+        
         PopupWindow popup = new PopupWindow(
             popupView,
-            180,
+            200,
             android.view.ViewGroup.LayoutParams.WRAP_CONTENT,
             true
         );
         popup.setBackgroundDrawable(new android.graphics.drawable.ColorDrawable(android.graphics.Color.TRANSPARENT));
-        popup.setElevation(12);
-        popup.setAnimationStyle(android.R.style.Animation_Dialog);
+        popup.setElevation(16f);
+        popup.setOverlapAnchor(true);
         
-        // Show popup anchored to the sort button
-        popup.showAsDropDown(anchor, -120, 8, Gravity.TOP | Gravity.END);
+        // Show below the sort button
+        popup.showAsDropDown(anchor, -140, 12, Gravity.TOP | Gravity.END);
         
-        // Sort options
-        TextView sortLatest = popupView.findViewById(R.id.sort_latest);
-        TextView sortOldest = popupView.findViewById(R.id.sort_oldest);
+        // Get views
+        LinearLayout sortLatest = popupView.findViewById(R.id.sort_latest);
+        LinearLayout sortOldest = popupView.findViewById(R.id.sort_oldest);
+        TextView checkLatest = popupView.findViewById(R.id.check_latest);
+        TextView checkOldest = popupView.findViewById(R.id.check_oldest);
         TextView viewList = popupView.findViewById(R.id.view_list);
         TextView viewCard = popupView.findViewById(R.id.view_card);
         
+        // Get the text views inside sort items
+        TextView sortLatestText = (TextView) sortLatest.getChildAt(0);
+        TextView sortOldestText = (TextView) sortOldest.getChildAt(0);
+        
+        // Sort selection with checkmarks
         sortLatest.setOnClickListener(v -> {
+            sortLatestText.setTextColor(0xFFFFFFFF);
+            checkLatest.setVisibility(View.VISIBLE);
+            sortOldestText.setTextColor(0xFFB0B0B0);
+            checkOldest.setVisibility(View.INVISIBLE);
             Toast.makeText(this, "Sorted by latest", Toast.LENGTH_SHORT).show();
             popup.dismiss();
         });
         
         sortOldest.setOnClickListener(v -> {
+            sortOldestText.setTextColor(0xFFFFFFFF);
+            checkOldest.setVisibility(View.VISIBLE);
+            sortLatestText.setTextColor(0xFFB0B0B0);
+            checkLatest.setVisibility(View.INVISIBLE);
             Toast.makeText(this, "Sorted by oldest", Toast.LENGTH_SHORT).show();
             popup.dismiss();
         });
         
+        // View toggle with capsule style
         viewList.setOnClickListener(v -> {
-            viewList.setBackgroundResource(R.drawable.pill_selected_small);
+            viewList.setBackgroundResource(R.drawable.segment_selected);
             viewList.setTextColor(0xFFFFFFFF);
             viewList.setTypeface(null, android.graphics.Typeface.BOLD);
-            viewCard.setBackgroundResource(R.drawable.pill_unselected_small);
+            viewCard.setBackgroundResource(R.drawable.segment_unselected);
             viewCard.setTextColor(0xFF888888);
             viewCard.setTypeface(null, android.graphics.Typeface.NORMAL);
             Toast.makeText(this, "List view", Toast.LENGTH_SHORT).show();
         });
         
         viewCard.setOnClickListener(v -> {
-            viewCard.setBackgroundResource(R.drawable.pill_selected_small);
+            viewCard.setBackgroundResource(R.drawable.segment_selected);
             viewCard.setTextColor(0xFFFFFFFF);
             viewCard.setTypeface(null, android.graphics.Typeface.BOLD);
-            viewList.setBackgroundResource(R.drawable.pill_unselected_small);
+            viewList.setBackgroundResource(R.drawable.segment_unselected);
             viewList.setTextColor(0xFF888888);
             viewList.setTypeface(null, android.graphics.Typeface.NORMAL);
             Toast.makeText(this, "Card view", Toast.LENGTH_SHORT).show();
