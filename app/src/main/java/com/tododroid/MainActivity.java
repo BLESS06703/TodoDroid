@@ -79,7 +79,7 @@ public class MainActivity extends AppCompatActivity {
         
         PopupWindow popup = new PopupWindow(
             popupView,
-            200,
+            240,
             android.view.ViewGroup.LayoutParams.WRAP_CONTENT,
             true
         );
@@ -88,7 +88,7 @@ public class MainActivity extends AppCompatActivity {
         popup.setOverlapAnchor(true);
         
         // Show below the sort button
-        popup.showAsDropDown(anchor, -140, 12, Gravity.TOP | Gravity.END);
+        popup.showAsDropDown(anchor, -160, 12, Gravity.TOP | Gravity.END);
         
         // Get views
         LinearLayout sortLatest = popupView.findViewById(R.id.sort_latest);
