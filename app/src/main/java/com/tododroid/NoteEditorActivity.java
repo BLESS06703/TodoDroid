@@ -1,15 +1,13 @@
 package com.tododroid;
 
 import android.os.Bundle;
-import android.text.Editable;
 import android.text.Spannable;
+import android.text.SpannableString;
 import android.text.style.BulletSpan;
 import android.text.style.LeadingMarginSpan;
 import android.text.style.StrikethroughSpan;
 import android.text.style.StyleSpan;
-import android.text.style.AlignmentSpan;
-import android.text.style.RelativeSizeSpan;
-import android.view.View;
+import android.view.Gravity;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.TextView;
@@ -21,10 +19,6 @@ public class NoteEditorActivity extends AppCompatActivity {
     private EditText editorTitle, editorContent;
     private TextView btnSave;
     private int noteIndex = -1;
-    
-    private boolean isBold = false;
-    private boolean isItalic = false;
-    private boolean isStrike = false;
     
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -45,113 +39,167 @@ public class NoteEditorActivity extends AppCompatActivity {
         btnBack.setOnClickListener(v -> finish());
         btnSave.setOnClickListener(v -> saveNote());
         
-        // Formatting buttons
+        // Formatting toolbar
         setupFormatting();
     }
     
     private void setupFormatting() {
-        TextView fmtBold = findViewById(R.id.fmt_bold);
-        TextView fmtItalic = findViewById(R.id.fmt_italic);
-        TextView fmtStrike = findViewById(R.id.fmt_strike);
-        TextView fmtBullet = findViewById(R.id.fmt_bullet);
-        TextView fmtNumber = findViewById(R.id.fmt_number);
-        TextView fmtAlignLeft = findViewById(R.id.fmt_align_left);
-        TextView fmtAlignCenter = findViewById(R.id.fmt_align_center);
-        TextView fmtHeading = findViewById(R.id.fmt_heading);
-        TextView fmtUndo = findViewById(R.id.fmt_undo);
-        
-        fmtBold.setOnClickListener(v -> {
-            isBold = !isBold;
-            fmtBold.setTextColor(isBold ? 0xFF7C3AED : 0xFF888888);
-            applySpan(new StyleSpan(android.graphics.Typeface.BOLD), isBold);
-        });
-        
-        fmtItalic.setOnClickListener(v -> {
-            isItalic = !isItalic;
-            fmtItalic.setTextColor(isItalic ? 0xFF7C3AED : 0xFF888888);
-            applySpan(new StyleSpan(android.graphics.Typeface.ITALIC), isItalic);
-        });
-        
-        fmtStrike.setOnClickListener(v -> {
-            isStrike = !isStrike;
-            fmtStrike.setTextColor(isStrike ? 0xFF7C3AED : 0xFF888888);
-            applySpan(new StrikethroughSpan(), isStrike);
-        });
-        
-        fmtBullet.setOnClickListener(v -> {
-            int start = editorContent.getSelectionStart();
-            Editable text = editorContent.getText();
-            
-            // Find start of line
-            int lineStart = start;
-            while (lineStart > 0 && text.charAt(lineStart - 1) != '\n') {
-                lineStart--;
-            }
-            
-            // Check if already has bullet
-            if (text.length() > lineStart + 2 && 
-                text.charAt(lineStart) == '•' && text.charAt(lineStart + 1) == ' ') {
-                text.delete(lineStart, lineStart + 2);
-            } else {
-                text.insert(lineStart, "• ");
-            }
-        });
-        
-        fmtNumber.setOnClickListener(v -> {
-            int start = editorContent.getSelectionStart();
-            Editable text = editorContent.getText();
-            
-            int lineStart = start;
-            while (lineStart > 0 && text.charAt(lineStart - 1) != '\n') {
-                lineStart--;
-            }
-            
-            text.insert(lineStart, "1. ");
-        });
-        
-        fmtAlignLeft.setOnClickListener(v -> {
-            fmtAlignLeft.setTextColor(0xFF7C3AED);
-            fmtAlignCenter.setTextColor(0xFF555555);
-            applySpan(new AlignmentSpan.Standard(android.text.Layout.Alignment.ALIGN_NORMAL), true);
-        });
-        
-        fmtAlignCenter.setOnClickListener(v -> {
-            fmtAlignCenter.setTextColor(0xFF7C3AED);
-            fmtAlignLeft.setTextColor(0xFF555555);
-            applySpan(new AlignmentSpan.Standard(android.text.Layout.Alignment.ALIGN_CENTER), true);
-        });
-        
-        fmtHeading.setOnClickListener(v -> {
-            applySpan(new RelativeSizeSpan(1.5f), true);
-            applySpan(new StyleSpan(android.graphics.Typeface.BOLD), true);
-        });
-        
-        fmtUndo.setOnClickListener(v -> {
-            editorContent.setText(editorContent.getText().toString());
-            isBold = false;
-            isItalic = false;
-            isStrike = false;
-            fmtBold.setTextColor(0xFF888888);
-            fmtItalic.setTextColor(0xFF888888);
-            fmtStrike.setTextColor(0xFF888888);
-        });
+        findViewById(R.id.fmt_bold).setOnClickListener(v -> toggleBold());
+        findViewById(R.id.fmt_italic).setOnClickListener(v -> toggleItalic());
+        findViewById(R.id.fmt_strike).setOnClickListener(v -> toggleStrikethrough());
+        findViewById(R.id.fmt_bullet).setOnClickListener(v -> insertBullet());
+        findViewById(R.id.fmt_number).setOnClickListener(v -> insertNumber());
+        findViewById(R.id.fmt_align_left).setOnClickListener(v -> alignLeft());
+        findViewById(R.id.fmt_align_center).setOnClickListener(v -> alignCenter());
+        findViewById(R.id.fmt_align_right).setOnClickListener(v -> alignRight());
+        findViewById(R.id.fmt_indent_inc).setOnClickListener(v -> increaseIndent());
+        findViewById(R.id.fmt_indent_dec).setOnClickListener(v -> decreaseIndent());
     }
     
-    private void applySpan(Object span, boolean add) {
-        Editable text = editorContent.getText();
+    private void toggleBold() {
         int start = editorContent.getSelectionStart();
         int end = editorContent.getSelectionEnd();
+        if (start == end) return;
         
-        if (start == end) return; // No selection
-        
-        if (add) {
-            text.setSpan(span, start, end, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
-        } else {
-            // Remove existing spans of this type
-            Object[] spans = text.getSpans(start, end, span.getClass());
-            for (Object s : spans) {
-                text.removeSpan(s);
+        Spannable str = editorContent.getText();
+        StyleSpan[] spans = str.getSpans(start, end, StyleSpan.class);
+        boolean hasBold = false;
+        for (StyleSpan span : spans) {
+            if (span.getStyle() == android.graphics.Typeface.BOLD) {
+                str.removeSpan(span);
+                hasBold = true;
             }
+        }
+        if (!hasBold) {
+            str.setSpan(new StyleSpan(android.graphics.Typeface.BOLD), start, end,
+                Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+        }
+        highlightButton(R.id.fmt_bold, !hasBold);
+    }
+    
+    private void toggleItalic() {
+        int start = editorContent.getSelectionStart();
+        int end = editorContent.getSelectionEnd();
+        if (start == end) return;
+        
+        Spannable str = editorContent.getText();
+        StyleSpan[] spans = str.getSpans(start, end, StyleSpan.class);
+        boolean hasItalic = false;
+        for (StyleSpan span : spans) {
+            if (span.getStyle() == android.graphics.Typeface.ITALIC) {
+                str.removeSpan(span);
+                hasItalic = true;
+            }
+        }
+        if (!hasItalic) {
+            str.setSpan(new StyleSpan(android.graphics.Typeface.ITALIC), start, end,
+                Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+        }
+        highlightButton(R.id.fmt_italic, !hasItalic);
+    }
+    
+    private void toggleStrikethrough() {
+        int start = editorContent.getSelectionStart();
+        int end = editorContent.getSelectionEnd();
+        if (start == end) return;
+        
+        Spannable str = editorContent.getText();
+        StrikethroughSpan[] spans = str.getSpans(start, end, StrikethroughSpan.class);
+        if (spans.length > 0) {
+            for (StrikethroughSpan span : spans) {
+                str.removeSpan(span);
+            }
+            highlightButton(R.id.fmt_strike, false);
+        } else {
+            str.setSpan(new StrikethroughSpan(), start, end,
+                Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+            highlightButton(R.id.fmt_strike, true);
+        }
+    }
+    
+    private void insertBullet() {
+        int start = editorContent.getSelectionStart();
+        int end = editorContent.getSelectionEnd();
+        if (start == end) return;
+        
+        Spannable str = editorContent.getText();
+        BulletSpan[] spans = str.getSpans(start, end, BulletSpan.class);
+        if (spans.length > 0) {
+            for (BulletSpan span : spans) str.removeSpan(span);
+        } else {
+            str.setSpan(new BulletSpan(24, 0xFF7C3AED), start, end,
+                Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+        }
+    }
+    
+    private void insertNumber() {
+        int pos = editorContent.getSelectionStart();
+        String text = editorContent.getText().toString();
+        
+        // Find start of line
+        int lineStart = text.lastIndexOf('\n', pos - 1);
+        if (lineStart == -1) lineStart = 0;
+        else lineStart++;
+        
+        String before = text.substring(0, lineStart);
+        String after = text.substring(lineStart);
+        
+        // Simple number insertion
+        editorContent.getText().insert(lineStart, "1. ");
+        editorContent.setSelection(lineStart + 3);
+    }
+    
+    private void alignLeft() {
+        editorContent.setGravity(Gravity.START);
+        highlightAlignButton(R.id.fmt_align_left);
+    }
+    
+    private void alignCenter() {
+        editorContent.setGravity(Gravity.CENTER);
+        highlightAlignButton(R.id.fmt_align_center);
+    }
+    
+    private void alignRight() {
+        editorContent.setGravity(Gravity.END);
+        highlightAlignButton(R.id.fmt_align_right);
+    }
+    
+    private void increaseIndent() {
+        int start = editorContent.getSelectionStart();
+        int end = editorContent.getSelectionEnd();
+        if (start == end) return;
+        
+        Spannable str = editorContent.getText();
+        str.setSpan(new LeadingMarginSpan.Standard(40), start, end,
+            Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+    }
+    
+    private void decreaseIndent() {
+        int start = editorContent.getSelectionStart();
+        int end = editorContent.getSelectionEnd();
+        if (start == end) return;
+        
+        Spannable str = editorContent.getText();
+        LeadingMarginSpan[] spans = str.getSpans(start, end, LeadingMarginSpan.class);
+        for (LeadingMarginSpan span : spans) {
+            str.removeSpan(span);
+        }
+    }
+    
+    private void highlightButton(int id, boolean active) {
+        TextView btn = findViewById(id);
+        if (active) {
+            btn.setTextColor(0xFF7C3AED);
+        } else {
+            btn.setTextColor(0xFF888888);
+        }
+    }
+    
+    private void highlightAlignButton(int activeId) {
+        int[] ids = {R.id.fmt_align_left, R.id.fmt_align_center, R.id.fmt_align_right};
+        for (int id : ids) {
+            TextView btn = findViewById(id);
+            btn.setTextColor(id == activeId ? 0xFF7C3AED : 0xFF888888);
         }
     }
     
@@ -168,7 +216,7 @@ public class NoteEditorActivity extends AppCompatActivity {
             GlobalData.getInstance().getItems().remove(noteIndex);
         }
         
-        TodoItem note = new TodoItem("Note", title, content, 
+        TodoItem note = new TodoItem("Note", title, content,
             getIntent().getLongExtra("note_timestamp", System.currentTimeMillis()));
         GlobalData.getInstance().addItem(note);
         
