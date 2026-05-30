@@ -2,8 +2,10 @@ package com.tododroid;
 
 import android.os.Bundle;
 import android.view.Gravity;
+import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.view.inputmethod.EditorInfo;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
@@ -24,6 +26,7 @@ public class MainActivity extends AppCompatActivity {
     private EditText searchInput;
     private TextView tabTasks, tabNotes;
     private ViewPager2 viewPager;
+    private ViewPagerAdapter pagerAdapter;
     
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -62,10 +65,30 @@ public class MainActivity extends AppCompatActivity {
         
         btnSort.setOnClickListener(v -> showSortPopup(v));
         
-        // Create button - focuses the search or switches to tasks tab
+        // Create button - switch to tasks and focus search
         btnCreate.setOnClickListener(v -> {
             viewPager.setCurrentItem(0);
+            selectTab(true);
             searchInput.requestFocus();
+        });
+        
+        // Search input - create task on Enter/Search key
+        searchInput.setOnEditorActionListener((v, actionId, event) -> {
+            if (actionId == EditorInfo.IME_ACTION_SEARCH ||
+                actionId == EditorInfo.IME_ACTION_DONE ||
+                (event != null && event.getKeyCode() == KeyEvent.KEYCODE_ENTER)) {
+                String text = searchInput.getText().toString().trim();
+                if (!text.isEmpty()) {
+                    TasksFragment tasksFrag = (TasksFragment) pagerAdapter.getFragment(0);
+                    if (tasksFrag != null) {
+                        tasksFrag.addTask(text);
+                        searchInput.setText("");
+                        Toast.makeText(this, "Task added", Toast.LENGTH_SHORT).show();
+                    }
+                }
+                return true;
+            }
+            return false;
         });
         
         navView.setNavigationItemSelectedListener(item -> {
@@ -138,7 +161,8 @@ public class MainActivity extends AppCompatActivity {
     }
     
     private void setupViewPager() {
-        viewPager.setAdapter(new ViewPagerAdapter(this));
+        pagerAdapter = new ViewPagerAdapter(this);
+        viewPager.setAdapter(pagerAdapter);
         viewPager.setCurrentItem(0);
     }
     

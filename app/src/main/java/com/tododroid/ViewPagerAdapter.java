@@ -7,6 +7,9 @@ import androidx.viewpager2.adapter.FragmentStateAdapter;
 
 public class ViewPagerAdapter extends FragmentStateAdapter {
     
+    private TasksFragment tasksFragment;
+    private NotesFragment notesFragment;
+    
     public ViewPagerAdapter(@NonNull FragmentActivity fragmentActivity) {
         super(fragmentActivity);
     }
@@ -15,10 +18,17 @@ public class ViewPagerAdapter extends FragmentStateAdapter {
     @Override
     public Fragment createFragment(int position) {
         if (position == 0) {
-            return new TasksFragment();
+            tasksFragment = new TasksFragment();
+            return tasksFragment;
         } else {
-            return new NotesFragment();
+            notesFragment = new NotesFragment();
+            return notesFragment;
         }
+    }
+    
+    public Fragment getFragment(int position) {
+        if (position == 0) return tasksFragment;
+        return notesFragment;
     }
     
     @Override
