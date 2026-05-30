@@ -27,6 +27,8 @@ public class MainActivity extends AppCompatActivity {
     private TextView tabTasks, tabNotes;
     private ViewPager2 viewPager;
     private ViewPagerAdapter pagerAdapter;
+    private boolean sortLatest = true;
+    private boolean cardViewMode = true;
     
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -55,11 +57,7 @@ public class MainActivity extends AppCompatActivity {
         });
         
         btnSort.setOnClickListener(v -> showSortPopup(v));
-        
-        // Create button → Note or Quick Task
         btnCreate.setOnClickListener(v -> showCreateSheet());
-        
-        // Search is purely search — no creation
         searchInput.setHint("Search tasks and notes...");
         
         navView.setNavigationItemSelectedListener(item -> {
@@ -77,17 +75,12 @@ public class MainActivity extends AppCompatActivity {
         BottomSheetDialog sheet = new BottomSheetDialog(this);
         View view = LayoutInflater.from(this).inflate(R.layout.bottom_sheet_create, null);
         sheet.setContentView(view);
-        
         view.findViewById(R.id.create_note).setOnClickListener(v -> {
-            sheet.dismiss();
-            startActivity(new Intent(MainActivity.this, NoteEditorActivity.class));
+            sheet.dismiss(); startActivity(new Intent(this, NoteEditorActivity.class));
         });
-        
         view.findViewById(R.id.create_task).setOnClickListener(v -> {
-            sheet.dismiss();
-            showQuickTaskDialog();
+            sheet.dismiss(); showQuickTaskDialog();
         });
-        
         sheet.show();
     }
     
@@ -95,18 +88,13 @@ public class MainActivity extends AppCompatActivity {
         BottomSheetDialog dialog = new BottomSheetDialog(this);
         View view = LayoutInflater.from(this).inflate(R.layout.dialog_quick_task, null);
         dialog.setContentView(view);
-        
         EditText input = view.findViewById(R.id.quick_task_input);
         TextView btnAdd = view.findViewById(R.id.btn_add_task);
         
         btnAdd.setOnClickListener(v -> {
             String text = input.getText().toString().trim();
-            if (text.isEmpty()) {
-                Toast.makeText(this, "Enter a task", Toast.LENGTH_SHORT).show();
-                return;
-            }
-            GlobalData.getInstance().addItem(
-                new TodoItem("Task", text, "", System.currentTimeMillis()));
+            if (text.isEmpty()) { Toast.makeText(this, "Enter a task", Toast.LENGTH_SHORT).show(); return; }
+            GlobalData.getInstance().addItem(new TodoItem("Task", text, "", System.currentTimeMillis()));
             refreshCurrentFragment();
             dialog.dismiss();
             viewPager.setCurrentItem(0);
@@ -115,13 +103,9 @@ public class MainActivity extends AppCompatActivity {
         });
         
         input.setOnEditorActionListener((v, actionId, event) -> {
-            if (actionId == android.view.inputmethod.EditorInfo.IME_ACTION_DONE) {
-                btnAdd.performClick();
-                return true;
-            }
+            if (actionId == android.view.inputmethod.EditorInfo.IME_ACTION_DONE) { btnAdd.performClick(); return true; }
             return false;
         });
-        
         dialog.show();
     }
     
@@ -140,6 +124,7 @@ public class MainActivity extends AppCompatActivity {
         long now = System.currentTimeMillis();
         data.addItem(new TodoItem("Task", "Build TodoDroid app", "", now));
         data.addItem(new TodoItem("Task", "Push code to GitHub", "", now - 3600000));
+        data.addItem(new TodoItem("Task", "Design dark theme UI", "", now - 86400000L * 3));
         TodoItem n1 = new TodoItem("Note", "App Ideas", "Rich text editor, voice notes, cloud sync", now - 86400000L * 2);
         n1.setThemeColor(0xFF1F2937); data.addItem(n1);
     }
@@ -155,15 +140,71 @@ public class MainActivity extends AppCompatActivity {
         int[] l = new int[2]; anchor.getLocationOnScreen(l);
         popup.showAtLocation(anchor, Gravity.NO_GRAVITY, l[0] - w + anchor.getWidth(), l[1] + anchor.getHeight() + 12);
         
-        LinearLayout sl = pv.findViewById(R.id.sort_latest), so = pv.findViewById(R.id.sort_oldest);
-        TextView cl = pv.findViewById(R.id.check_latest), co = pv.findViewById(R.id.check_oldest);
-        TextView vl = pv.findViewById(R.id.view_list), vc = pv.findViewById(R.id.view_card);
-        TextView slt = (TextView) sl.getChildAt(0), sot = (TextView) so.getChildAt(0);
+        LinearLayout sortLatest = pv.findViewById(R.id.sort_latest);
+        LinearLayout sortOldest = pv.findViewById(R.id.sort_oldest);
+        TextView checkLatest = pv.findViewById(R.id.check_latest);
+        TextView checkOldest = pv.findViewById(R.id.check_oldest);
+        TextView viewList = pv.findViewById(R.id.view_list);
+        TextView viewCard = pv.findViewById(R.id.view_card);
+        TextView sortLatestText = (TextView) sortLatest.getChildAt(0);
+        TextView sortOldestText = (TextView) sortOldest.getChildAt(0);
         
-        sl.setOnClickListener(v -> { slt.setTextColor(0xFFFFFFFF); cl.setVisibility(View.VISIBLE); sot.setTextColor(0xFFB0B0B0); co.setVisibility(View.INVISIBLE); popup.dismiss(); });
-        so.setOnClickListener(v -> { sot.setTextColor(0xFFFFFFFF); co.setVisibility(View.VISIBLE); slt.setTextColor(0xFFB0B0B0); cl.setVisibility(View.INVISIBLE); popup.dismiss(); });
-        vl.setOnClickListener(v -> { vl.setBackgroundResource(R.drawable.segment_selected); vl.setTextColor(0xFFFFFFFF); vc.setBackgroundResource(R.drawable.segment_unselected); vc.setTextColor(0xFF888888); });
-        vc.setOnClickListener(v -> { vc.setBackgroundResource(R.drawable.segment_selected); vc.setTextColor(0xFFFFFFFF); vl.setBackgroundResource(R.drawable.segment_unselected); vl.setTextColor(0xFF888888); });
+        // Set initial state
+        if (sortLatest) {
+            sortLatestText.setTextColor(0xFFFFFFFF); checkLatest.setVisibility(View.VISIBLE);
+            sortOldestText.setTextColor(0xFFB0B0B0); checkOldest.setVisibility(View.INVISIBLE);
+        } else {
+            sortOldestText.setTextColor(0xFFFFFFFF); checkOldest.setVisibility(View.VISIBLE);
+            sortLatestText.setTextColor(0xFFB0B0B0); checkLatest.setVisibility(View.INVISIBLE);
+        }
+        
+        if (cardViewMode) {
+            viewCard.setBackgroundResource(R.drawable.segment_selected); viewCard.setTextColor(0xFFFFFFFF);
+            viewList.setBackgroundResource(R.drawable.segment_unselected); viewList.setTextColor(0xFF888888);
+        } else {
+            viewList.setBackgroundResource(R.drawable.segment_selected); viewList.setTextColor(0xFFFFFFFF);
+            viewCard.setBackgroundResource(R.drawable.segment_unselected); viewCard.setTextColor(0xFF888888);
+        }
+        
+        sortLatest.setOnClickListener(v -> {
+            sortLatest = true;
+            sortLatestText.setTextColor(0xFFFFFFFF); checkLatest.setVisibility(View.VISIBLE);
+            sortOldestText.setTextColor(0xFFB0B0B0); checkOldest.setVisibility(View.INVISIBLE);
+            applySort();
+            popup.dismiss();
+        });
+        
+        sortOldest.setOnClickListener(v -> {
+            sortLatest = false;
+            sortOldestText.setTextColor(0xFFFFFFFF); checkOldest.setVisibility(View.VISIBLE);
+            sortLatestText.setTextColor(0xFFB0B0B0); checkLatest.setVisibility(View.INVISIBLE);
+            applySort();
+            popup.dismiss();
+        });
+        
+        viewList.setOnClickListener(v -> {
+            cardViewMode = false;
+            viewList.setBackgroundResource(R.drawable.segment_selected); viewList.setTextColor(0xFFFFFFFF);
+            viewCard.setBackgroundResource(R.drawable.segment_unselected); viewCard.setTextColor(0xFF888888);
+            applyView();
+        });
+        
+        viewCard.setOnClickListener(v -> {
+            cardViewMode = true;
+            viewCard.setBackgroundResource(R.drawable.segment_selected); viewCard.setTextColor(0xFFFFFFFF);
+            viewList.setBackgroundResource(R.drawable.segment_unselected); viewList.setTextColor(0xFF888888);
+            applyView();
+        });
+    }
+    
+    private void applySort() {
+        TasksFragment tf = (TasksFragment) pagerAdapter.getFragment(0);
+        if (tf != null) tf.setSort(sortLatest);
+    }
+    
+    private void applyView() {
+        TasksFragment tf = (TasksFragment) pagerAdapter.getFragment(0);
+        if (tf != null) tf.setCardView(cardViewMode);
     }
     
     private void setupViewPager() { pagerAdapter = new ViewPagerAdapter(this); viewPager.setAdapter(pagerAdapter); viewPager.setCurrentItem(0); }

@@ -20,6 +20,7 @@ public class TasksFragment extends Fragment {
     private LinearLayout toggleCompleted;
     private TextView toggleText;
     private View toggleDot;
+    private ArrayList<TaskItem> taskItems;
     
     @Nullable
     @Override
@@ -33,6 +34,10 @@ public class TasksFragment extends Fragment {
         toggleDot = view.findViewById(R.id.toggle_dot);
         
         recyclerTasks.setLayoutManager(new LinearLayoutManager(getContext()));
+        
+        taskItems = new ArrayList<>();
+        adapter = new TodoAdapter(taskItems);
+        recyclerTasks.setAdapter(adapter);
         
         loadTasks();
         
@@ -49,25 +54,22 @@ public class TasksFragment extends Fragment {
     }
     
     private void loadTasks() {
-        ArrayList<TaskItem> taskItems = new ArrayList<>();
-        
+        taskItems.clear();
         for (TodoItem item : GlobalData.getInstance().getTasks()) {
             taskItems.add(new TaskItem(TaskItem.TYPE_TASK, item.getTitle(), item.getTimestamp()));
         }
-        
-        adapter = new TodoAdapter(taskItems);
-        recyclerTasks.setAdapter(adapter);
+        adapter.notifyDataSetChanged();
     }
     
     public void refreshData() {
-        if (recyclerTasks != null) {
-            loadTasks();
-        }
+        if (taskItems != null && adapter != null) loadTasks();
     }
     
-    public void addTask(String text) {
-        GlobalData.getInstance().addItem(
-            new TodoItem("Task", text, "", System.currentTimeMillis()));
-        refreshData();
+    public void setSort(boolean latest) {
+        if (adapter != null) adapter.setSortByLatest(latest);
+    }
+    
+    public void setCardView(boolean card) {
+        if (adapter != null) adapter.setCardView(card);
     }
 }

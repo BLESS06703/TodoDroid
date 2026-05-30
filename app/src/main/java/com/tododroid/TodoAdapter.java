@@ -11,6 +11,8 @@ import androidx.recyclerview.widget.RecyclerView;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.Locale;
 import java.util.concurrent.TimeUnit;
@@ -20,6 +22,8 @@ public class TodoAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     private ArrayList<TaskItem> allItems;
     private ArrayList<TaskItem> visibleItems;
     private boolean hideCompleted = false;
+    private boolean sortByLatest = true;
+    private boolean cardView = true;
     private SimpleDateFormat timeFormat = new SimpleDateFormat("hh:mm a", Locale.getDefault());
     private SimpleDateFormat dateFormat = new SimpleDateFormat("MMM d, hh:mm a", Locale.getDefault());
     
@@ -34,37 +38,50 @@ public class TodoAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         notifyDataSetChanged();
     }
     
-    public boolean isHideCompleted() {
-        return hideCompleted;
+    public boolean isHideCompleted() { return hideCompleted; }
+    
+    public void setSortByLatest(boolean latest) {
+        this.sortByLatest = latest;
+        rebuildVisibleList();
+        notifyDataSetChanged();
     }
+    
+    public boolean isSortByLatest() { return sortByLatest; }
+    
+    public void setCardView(boolean card) {
+        this.cardView = card;
+        notifyDataSetChanged();
+    }
+    
+    public boolean isCardView() { return cardView; }
     
     private void rebuildVisibleList() {
         visibleItems = new ArrayList<>();
-        String currentHeader = null;
         
-        for (TaskItem item : allItems) {
-            if (item.getType() == TaskItem.TYPE_HEADER) {
-                currentHeader = item.getTitle();
-                visibleItems.add(item);
-            } else if (item.getType() == TaskItem.TYPE_TASK) {
-                if (hideCompleted && item.isCompleted()) {
-                    continue;
-                }
-                visibleItems.add(item);
-            }
+        // Separate headers and tasks
+        ArrayList<TaskItem> temp = new ArrayList<>(allItems);
+        
+        // Sort tasks by timestamp
+        if (sortByLatest) {
+            Collections.sort(temp, (a, b) -> Long.compare(b.getTimestamp(), a.getTimestamp()));
+        } else {
+            Collections.sort(temp, (a, b) -> Long.compare(a.getTimestamp(), b.getTimestamp()));
         }
         
-        // Remove empty headers
-        for (int i = visibleItems.size() - 1; i >= 0; i--) {
-            if (visibleItems.get(i).getType() == TaskItem.TYPE_HEADER) {
-                boolean hasTasks = false;
-                for (int j = i + 1; j < visibleItems.size(); j++) {
-                    if (visibleItems.get(j).getType() == TaskItem.TYPE_HEADER) break;
-                    hasTasks = true;
+        // Rebuild with proper headers
+        String lastHeader = null;
+        for (TaskItem item : temp) {
+            if (item.getType() == TaskItem.TYPE_HEADER) continue; // skip old headers
+            
+            if (item.getType() == TaskItem.TYPE_TASK) {
+                if (hideCompleted && item.isCompleted()) continue;
+                
+                String category = getCategory(item.getTimestamp());
+                if (!category.equals(lastHeader)) {
+                    visibleItems.add(new TaskItem(TaskItem.TYPE_HEADER, category));
+                    lastHeader = category;
                 }
-                if (!hasTasks) {
-                    visibleItems.remove(i);
-                }
+                visibleItems.add(item);
             }
         }
     }
@@ -101,7 +118,13 @@ public class TodoAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         if (viewType == TaskItem.TYPE_HEADER) {
             return new HeaderViewHolder(inflater.inflate(R.layout.item_header, parent, false));
         } else {
-            return new TaskViewHolder(inflater.inflate(R.layout.item_todo, parent, false));
+            if (cardView) {
+                return new TaskViewHolder(inflater.inflate(R.layout.item_todo, parent, false));
+            } else {
+                // Simple list item
+                View v = inflater.inflate(R.layout.item_todo_compact, parent, false);
+                return new TaskViewHolder(v);
+            }
         }
     }
     
@@ -171,36 +194,13 @@ public class TodoAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     }
     
     @Override
-    public int getItemCount() {
-        return visibleItems.size();
-    }
+    public int getItemCount() { return visibleItems.size(); }
     
     public void addTask(String text) {
-        long now = System.currentTimeMillis();
-        String category = getCategory(now);
-        int headerIndex = findHeaderIndex(category);
-        
-        if (headerIndex == -1) {
-            allItems.add(new TaskItem(TaskItem.TYPE_HEADER, category));
-            headerIndex = allItems.size() - 1;
-        }
-        
-        TaskItem task = new TaskItem(TaskItem.TYPE_TASK, text, now);
-        int insertAt = headerIndex + 1;
-        while (insertAt < allItems.size() && allItems.get(insertAt).getType() == TaskItem.TYPE_TASK) {
-            insertAt++;
-        }
-        allItems.add(insertAt, task);
+        TaskItem task = new TaskItem(TaskItem.TYPE_TASK, text, System.currentTimeMillis());
+        allItems.add(task);
         rebuildVisibleList();
         notifyDataSetChanged();
-    }
-    
-    private int findHeaderIndex(String category) {
-        for (int i = 0; i < allItems.size(); i++) {
-            if (allItems.get(i).getType() == TaskItem.TYPE_HEADER && 
-                allItems.get(i).getTitle().equals(category)) return i;
-        }
-        return -1;
     }
     
     private String getCategory(long timestamp) {
