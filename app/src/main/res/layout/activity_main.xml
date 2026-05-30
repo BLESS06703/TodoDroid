@@ -131,7 +131,7 @@
         android:fitsSystemWindows="false"
         app:itemTextColor="#E0E0E0"
         app:itemIconTint="#7C3AED"
-        app:itemTextAppearance="@style/NavDrawerText"
+        
         app:menu="@menu/nav_menu"
         app:headerLayout="@layout/nav_header" />
 
