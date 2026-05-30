@@ -1,5 +1,6 @@
 package com.tododroid;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.view.Gravity;
 import android.view.LayoutInflater;
@@ -27,7 +28,6 @@ public class MainActivity extends AppCompatActivity {
     private TextView tabTasks, tabNotes;
     private ViewPager2 viewPager;
     private ViewPagerAdapter pagerAdapter;
-    
     private String currentCreateType = "Task";
     
     @Override
@@ -71,11 +71,9 @@ public class MainActivity extends AppCompatActivity {
         
         searchInput.setHint("Search...");
         searchInput.setOnEditorActionListener((v, actionId, event) -> {
-            if (actionId == EditorInfo.IME_ACTION_SEARCH ||
-                actionId == EditorInfo.IME_ACTION_DONE) {
+            if (actionId == EditorInfo.IME_ACTION_SEARCH || actionId == EditorInfo.IME_ACTION_DONE) {
                 String query = searchInput.getText().toString().trim();
                 if (!query.isEmpty()) {
-                    // Quick create task when typing in search
                     GlobalData.getInstance().addItem(
                         new TodoItem("Task", query, "", System.currentTimeMillis()));
                     refreshCurrentFragment();
@@ -111,7 +109,6 @@ public class MainActivity extends AppCompatActivity {
         
         currentCreateType = "Task";
         
-        // Type toggle
         typeTask.setOnClickListener(v -> {
             currentCreateType = "Task";
             typeTask.setBackgroundResource(R.drawable.segment_selected);
@@ -132,32 +129,31 @@ public class MainActivity extends AppCompatActivity {
             typeTask.setTypeface(null, android.graphics.Typeface.NORMAL);
         });
         
-        // Create button action
         btnCreateItem.setOnClickListener(v -> {
             String title = inputTitle.getText().toString().trim();
             if (title.isEmpty()) {
                 Toast.makeText(this, "Please enter a title", Toast.LENGTH_SHORT).show();
                 return;
             }
-            String content = inputContent.getText().toString().trim();
-            
-            TodoItem newItem = new TodoItem(currentCreateType, title, content, 
-                System.currentTimeMillis());
-            GlobalData.getInstance().addItem(newItem);
             
             dialog.dismiss();
             
-            // Switch to the correct tab
-            if (currentCreateType.equals("Task")) {
+            if (currentCreateType.equals("Note")) {
+                // Open full note editor
+                Intent intent = new Intent(MainActivity.this, NoteEditorActivity.class);
+                intent.putExtra("note_title", title);
+                intent.putExtra("note_content", inputContent.getText().toString().trim());
+                startActivity(intent);
+            } else {
+                // Quick task creation
+                String content = inputContent.getText().toString().trim();
+                GlobalData.getInstance().addItem(
+                    new TodoItem("Task", title, content, System.currentTimeMillis()));
                 viewPager.setCurrentItem(0);
                 selectTab(true);
-            } else {
-                viewPager.setCurrentItem(1);
-                selectTab(false);
+                refreshCurrentFragment();
+                Toast.makeText(this, "Task created!", Toast.LENGTH_SHORT).show();
             }
-            
-            refreshCurrentFragment();
-            Toast.makeText(this, currentCreateType + " created!", Toast.LENGTH_SHORT).show();
         });
         
         dialog.show();
@@ -174,8 +170,9 @@ public class MainActivity extends AppCompatActivity {
     
     private void seedDemoData() {
         GlobalData data = GlobalData.getInstance();
-        long now = System.currentTimeMillis();
+        if (!data.getItems().isEmpty()) return;
         
+        long now = System.currentTimeMillis();
         data.addItem(new TodoItem("Task", "Build TodoDroid app", "Complete Android app with Termux", now));
         data.addItem(new TodoItem("Task", "Push code to GitHub", "", now - 3600000));
         data.addItem(new TodoItem("Task", "Design dark theme UI", "Purple accent on dark background", now - 86400000L * 3));
@@ -183,21 +180,24 @@ public class MainActivity extends AppCompatActivity {
         data.addItem(new TodoItem("Note", "Meeting Notes", "Discussed module architecture and bottom nav design", now - 86400000L * 5));
     }
     
+    @Override
+    protected void onResume() {
+        super.onResume();
+        refreshCurrentFragment();
+    }
+    
     private void showSortPopup(View anchor) {
         View popupView = LayoutInflater.from(this).inflate(R.layout.popup_sort_menu, null);
         int width = (int) (300 * getResources().getDisplayMetrics().density);
         
-        PopupWindow popup = new PopupWindow(popupView, width,
-            LinearLayout.LayoutParams.WRAP_CONTENT, true);
-        popup.setBackgroundDrawable(new android.graphics.drawable.ColorDrawable(
-            android.graphics.Color.TRANSPARENT));
+        PopupWindow popup = new PopupWindow(popupView, width, LinearLayout.LayoutParams.WRAP_CONTENT, true);
+        popup.setBackgroundDrawable(new android.graphics.drawable.ColorDrawable(android.graphics.Color.TRANSPARENT));
         popup.setElevation(24f);
         
         int[] location = new int[2];
         anchor.getLocationOnScreen(location);
         popup.showAtLocation(anchor, Gravity.NO_GRAVITY,
-            location[0] - width + anchor.getWidth(),
-            location[1] + anchor.getHeight() + 12);
+            location[0] - width + anchor.getWidth(), location[1] + anchor.getHeight() + 12);
         
         LinearLayout sortLatest = popupView.findViewById(R.id.sort_latest);
         LinearLayout sortOldest = popupView.findViewById(R.id.sort_oldest);

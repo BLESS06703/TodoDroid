@@ -5,40 +5,62 @@
     android:layout_height="match_parent"
     android:orientation="vertical"
     android:background="#121212"
-    android:gravity="center"
-    android:padding="24dp">
+    android:paddingHorizontal="18dp"
+    android:paddingTop="8dp">
 
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="My Notes"
+        android:textSize="12sp"
+        android:textColor="#777777"
+        android:fontFamily="sans-serif-medium"
+        android:letterSpacing="0.08"
+        android:layout_marginBottom="14dp"
+        android:includeFontPadding="false"
+        android:textAllCaps="true" />
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/recycler_notes"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:clipToPadding="false"
+        android:paddingBottom="16dp" />
+
+    <!-- Empty state -->
     <LinearLayout
-        android:layout_width="56dp"
-        android:layout_height="56dp"
-        android:background="@drawable/notes_icon_bg"
+        android:id="@+id/empty_notes"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:orientation="vertical"
         android:gravity="center"
-        android:layout_marginBottom="16dp">
+        android:visibility="gone">
 
-        <ImageView
-            android:layout_width="28dp"
-            android:layout_height="28dp"
-            android:src="@android:drawable/ic_menu_edit"
-            app:tint="#FFFFFF" />
+        <LinearLayout
+            android:layout_width="56dp"
+            android:layout_height="56dp"
+            android:background="@drawable/notes_icon_bg"
+            android:gravity="center"
+            android:layout_marginBottom="16dp">
+
+            <ImageView
+                android:layout_width="28dp"
+                android:layout_height="28dp"
+                android:src="@android:drawable/ic_menu_edit"
+                app:tint="#FFFFFF" />
+
+        </LinearLayout>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="No notes yet"
+            android:textSize="16sp"
+            android:textColor="#888888"
+            android:fontFamily="sans-serif" />
 
     </LinearLayout>
-
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Notes"
-        android:textSize="22sp"
-        android:textColor="#FFFFFF"
-        android:fontFamily="sans-serif-medium"
-        android:layout_marginBottom="8dp" />
-
-    <TextView
-        android:id="@+id/note_count"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="0 notes"
-        android:textSize="14sp"
-        android:textColor="#888888"
-        android:fontFamily="sans-serif" />
 
 </LinearLayout>
