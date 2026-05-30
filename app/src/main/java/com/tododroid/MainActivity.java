@@ -2,7 +2,6 @@ package com.tododroid;
 
 import android.os.Bundle;
 import android.view.Gravity;
-import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.inputmethod.EditorInfo;
@@ -29,6 +28,8 @@ public class MainActivity extends AppCompatActivity {
     private ViewPager2 viewPager;
     private ViewPagerAdapter pagerAdapter;
     
+    private String currentCreateType = "Task";
+    
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -45,6 +46,7 @@ public class MainActivity extends AppCompatActivity {
         viewPager = findViewById(R.id.view_pager);
         
         setupViewPager();
+        seedDemoData();
         
         btnMenu.setOnClickListener(v -> drawerLayout.openDrawer(GravityCompat.START));
         
@@ -65,24 +67,20 @@ public class MainActivity extends AppCompatActivity {
         });
         
         btnSort.setOnClickListener(v -> showSortPopup(v));
-        btnCreate.setOnClickListener(v -> showCreateSheet());
+        btnCreate.setOnClickListener(v -> showCreateDialog());
         
-        // Search: on Enter, create task if text exists
-        searchInput.setHint("Search tasks and notes...");
+        searchInput.setHint("Search...");
         searchInput.setOnEditorActionListener((v, actionId, event) -> {
             if (actionId == EditorInfo.IME_ACTION_SEARCH ||
-                actionId == EditorInfo.IME_ACTION_DONE ||
-                (event != null && event.getAction() == KeyEvent.ACTION_DOWN &&
-                 event.getKeyCode() == KeyEvent.KEYCODE_ENTER)) {
-                String text = searchInput.getText().toString().trim();
-                if (!text.isEmpty()) {
-                    TasksFragment frag = (TasksFragment) pagerAdapter.getFragment(0);
-                    if (frag != null) {
-                        viewPager.setCurrentItem(0);
-                        frag.addTask(text);
-                        searchInput.setText("");
-                        Toast.makeText(this, "Task added", Toast.LENGTH_SHORT).show();
-                    }
+                actionId == EditorInfo.IME_ACTION_DONE) {
+                String query = searchInput.getText().toString().trim();
+                if (!query.isEmpty()) {
+                    // Quick create task when typing in search
+                    GlobalData.getInstance().addItem(
+                        new TodoItem("Task", query, "", System.currentTimeMillis()));
+                    refreshCurrentFragment();
+                    searchInput.setText("");
+                    Toast.makeText(this, "Task added", Toast.LENGTH_SHORT).show();
                 }
                 return true;
             }
@@ -100,26 +98,89 @@ public class MainActivity extends AppCompatActivity {
         });
     }
     
-    private void showCreateSheet() {
-        BottomSheetDialog sheet = new BottomSheetDialog(this);
-        View sheetView = LayoutInflater.from(this).inflate(R.layout.bottom_sheet_create, null);
-        sheet.setContentView(sheetView);
+    private void showCreateDialog() {
+        BottomSheetDialog dialog = new BottomSheetDialog(this);
+        View view = LayoutInflater.from(this).inflate(R.layout.dialog_create, null);
+        dialog.setContentView(view);
         
-        sheetView.findViewById(R.id.create_task).setOnClickListener(v -> {
-            sheet.dismiss();
-            viewPager.setCurrentItem(0);
-            selectTab(true);
-            searchInput.requestFocus();
+        TextView typeTask = view.findViewById(R.id.type_task);
+        TextView typeNote = view.findViewById(R.id.type_note);
+        EditText inputTitle = view.findViewById(R.id.input_title);
+        EditText inputContent = view.findViewById(R.id.input_content);
+        TextView btnCreateItem = view.findViewById(R.id.btn_create_item);
+        
+        currentCreateType = "Task";
+        
+        // Type toggle
+        typeTask.setOnClickListener(v -> {
+            currentCreateType = "Task";
+            typeTask.setBackgroundResource(R.drawable.segment_selected);
+            typeTask.setTextColor(0xFFFFFFFF);
+            typeTask.setTypeface(null, android.graphics.Typeface.BOLD);
+            typeNote.setBackgroundResource(R.drawable.segment_unselected);
+            typeNote.setTextColor(0xFF888888);
+            typeNote.setTypeface(null, android.graphics.Typeface.NORMAL);
         });
         
-        sheetView.findViewById(R.id.create_note).setOnClickListener(v -> {
-            sheet.dismiss();
-            viewPager.setCurrentItem(1);
-            selectTab(false);
-            Toast.makeText(this, "Note editor coming soon", Toast.LENGTH_SHORT).show();
+        typeNote.setOnClickListener(v -> {
+            currentCreateType = "Note";
+            typeNote.setBackgroundResource(R.drawable.segment_selected);
+            typeNote.setTextColor(0xFFFFFFFF);
+            typeNote.setTypeface(null, android.graphics.Typeface.BOLD);
+            typeTask.setBackgroundResource(R.drawable.segment_unselected);
+            typeTask.setTextColor(0xFF888888);
+            typeTask.setTypeface(null, android.graphics.Typeface.NORMAL);
         });
         
-        sheet.show();
+        // Create button action
+        btnCreateItem.setOnClickListener(v -> {
+            String title = inputTitle.getText().toString().trim();
+            if (title.isEmpty()) {
+                Toast.makeText(this, "Please enter a title", Toast.LENGTH_SHORT).show();
+                return;
+            }
+            String content = inputContent.getText().toString().trim();
+            
+            TodoItem newItem = new TodoItem(currentCreateType, title, content, 
+                System.currentTimeMillis());
+            GlobalData.getInstance().addItem(newItem);
+            
+            dialog.dismiss();
+            
+            // Switch to the correct tab
+            if (currentCreateType.equals("Task")) {
+                viewPager.setCurrentItem(0);
+                selectTab(true);
+            } else {
+                viewPager.setCurrentItem(1);
+                selectTab(false);
+            }
+            
+            refreshCurrentFragment();
+            Toast.makeText(this, currentCreateType + " created!", Toast.LENGTH_SHORT).show();
+        });
+        
+        dialog.show();
+    }
+    
+    private void refreshCurrentFragment() {
+        if (pagerAdapter != null) {
+            TasksFragment taskFrag = (TasksFragment) pagerAdapter.getFragment(0);
+            NotesFragment noteFrag = (NotesFragment) pagerAdapter.getFragment(1);
+            if (taskFrag != null) taskFrag.refreshData();
+            if (noteFrag != null) noteFrag.refreshData();
+        }
+    }
+    
+    private void seedDemoData() {
+        GlobalData data = GlobalData.getInstance();
+        long now = System.currentTimeMillis();
+        
+        data.addItem(new TodoItem("Task", "Build TodoDroid app", "Complete Android app with Termux", now));
+        data.addItem(new TodoItem("Task", "Push code to GitHub", "", now - 3600000));
+        data.addItem(new TodoItem("Task", "Design dark theme UI", "Purple accent on dark background", now - 86400000L * 3));
+        data.addItem(new TodoItem("Note", "App Ideas", "Add rich text editor, voice notes, and cloud sync", now - 86400000L * 2));
+        data.addItem(new TodoItem("Note", "Meeting Notes", "Discussed module architecture and bottom nav design", now - 86400000L * 5));
     }
     
     private void showSortPopup(View anchor) {
