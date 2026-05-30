@@ -1,8 +1,8 @@
 package com.tododroid;
 
 import android.os.Bundle;
-import android.view.View;
 import android.widget.EditText;
+import android.widget.ImageButton;
 import android.widget.TextView;
 import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
@@ -23,7 +23,6 @@ public class NoteEditorActivity extends AppCompatActivity {
         btnSave = findViewById(R.id.btn_save);
         ImageButton btnBack = findViewById(R.id.btn_back);
         
-        // Load existing note data if editing
         if (getIntent().hasExtra("note_title")) {
             noteIndex = getIntent().getIntExtra("note_index", -1);
             editorTitle.setText(getIntent().getStringExtra("note_title"));
@@ -31,7 +30,6 @@ public class NoteEditorActivity extends AppCompatActivity {
         }
         
         btnBack.setOnClickListener(v -> finish());
-        
         btnSave.setOnClickListener(v -> saveNote());
     }
     
@@ -45,7 +43,6 @@ public class NoteEditorActivity extends AppCompatActivity {
         }
         
         if (noteIndex >= 0) {
-            // Editing existing note - update it
             GlobalData.getInstance().getItems().remove(noteIndex);
         }
         
