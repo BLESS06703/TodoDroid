@@ -35,34 +35,38 @@ public class TasksFragment extends Fragment {
         
         recyclerTasks.setLayoutManager(new LinearLayoutManager(getContext()));
         
+        // Create the list ONCE and keep it
         taskItems = new ArrayList<>();
+        loadTasksFromGlobal();
+        
         adapter = new TodoAdapter(taskItems);
         recyclerTasks.setAdapter(adapter);
         
-        loadTasks();
+        toggleText.setText("Hide done");
+        toggleDot.setBackgroundResource(R.drawable.toggle_dot_off);
         
         toggleCompleted.setOnClickListener(v -> {
-            if (adapter != null) {
-                boolean newState = !adapter.isHideCompleted();
-                adapter.setHideCompleted(newState);
-                toggleText.setText(newState ? "Show done" : "Hide done");
-                toggleDot.setBackgroundResource(newState ? R.drawable.toggle_dot_on : R.drawable.toggle_dot_off);
-            }
+            boolean newState = !adapter.isHideCompleted();
+            adapter.setHideCompleted(newState);
+            toggleText.setText(newState ? "Show done" : "Hide done");
+            toggleDot.setBackgroundResource(newState ? R.drawable.toggle_dot_on : R.drawable.toggle_dot_off);
         });
         
         return view;
     }
     
-    private void loadTasks() {
+    private void loadTasksFromGlobal() {
         taskItems.clear();
         for (TodoItem item : GlobalData.getInstance().getTasks()) {
             taskItems.add(new TaskItem(TaskItem.TYPE_TASK, item.getTitle(), item.getTimestamp()));
         }
-        adapter.notifyDataSetChanged();
     }
     
     public void refreshData() {
-        if (taskItems != null && adapter != null) loadTasks();
+        loadTasksFromGlobal();
+        if (adapter != null) {
+            adapter.refreshFromSource();
+        }
     }
     
     public void setSort(boolean latest) {

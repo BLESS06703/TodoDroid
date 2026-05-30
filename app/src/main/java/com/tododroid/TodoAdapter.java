@@ -10,16 +10,14 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.recyclerview.widget.RecyclerView;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.Date;
 import java.util.Locale;
 import java.util.concurrent.TimeUnit;
 
 public class TodoAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     
-    private ArrayList<TaskItem> allItems;
+    private ArrayList<TaskItem> sourceList;
     private ArrayList<TaskItem> visibleItems;
     private boolean hideCompleted = false;
     private boolean sortByLatest = true;
@@ -28,7 +26,8 @@ public class TodoAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     private SimpleDateFormat dateFormat = new SimpleDateFormat("MMM d, hh:mm a", Locale.getDefault());
     
     public TodoAdapter(ArrayList<TaskItem> items) {
-        this.allItems = items;
+        this.sourceList = items;
+        this.visibleItems = new ArrayList<>();
         rebuildVisibleList();
     }
     
@@ -55,34 +54,35 @@ public class TodoAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     
     public boolean isCardView() { return cardView; }
     
+    public void refreshFromSource() {
+        rebuildVisibleList();
+        notifyDataSetChanged();
+    }
+    
     private void rebuildVisibleList() {
-        visibleItems = new ArrayList<>();
+        visibleItems.clear();
         
-        // Separate headers and tasks
-        ArrayList<TaskItem> temp = new ArrayList<>(allItems);
-        
-        // Sort tasks by timestamp
-        if (sortByLatest) {
-            Collections.sort(temp, (a, b) -> Long.compare(b.getTimestamp(), a.getTimestamp()));
-        } else {
-            Collections.sort(temp, (a, b) -> Long.compare(a.getTimestamp(), b.getTimestamp()));
-        }
-        
-        // Rebuild with proper headers
-        String lastHeader = null;
-        for (TaskItem item : temp) {
-            if (item.getType() == TaskItem.TYPE_HEADER) continue; // skip old headers
-            
+        ArrayList<TaskItem> tasksOnly = new ArrayList<>();
+        for (TaskItem item : sourceList) {
             if (item.getType() == TaskItem.TYPE_TASK) {
                 if (hideCompleted && item.isCompleted()) continue;
-                
-                String category = getCategory(item.getTimestamp());
-                if (!category.equals(lastHeader)) {
-                    visibleItems.add(new TaskItem(TaskItem.TYPE_HEADER, category));
-                    lastHeader = category;
-                }
-                visibleItems.add(item);
+                tasksOnly.add(item);
             }
+        }
+        
+        Collections.sort(tasksOnly, (a, b) -> {
+            if (sortByLatest) return Long.compare(b.getTimestamp(), a.getTimestamp());
+            else return Long.compare(a.getTimestamp(), b.getTimestamp());
+        });
+        
+        String lastHeader = null;
+        for (TaskItem task : tasksOnly) {
+            String category = getCategory(task.getTimestamp());
+            if (!category.equals(lastHeader)) {
+                visibleItems.add(new TaskItem(TaskItem.TYPE_HEADER, category));
+                lastHeader = category;
+            }
+            visibleItems.add(task);
         }
     }
     
@@ -118,13 +118,8 @@ public class TodoAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         if (viewType == TaskItem.TYPE_HEADER) {
             return new HeaderViewHolder(inflater.inflate(R.layout.item_header, parent, false));
         } else {
-            if (cardView) {
-                return new TaskViewHolder(inflater.inflate(R.layout.item_todo, parent, false));
-            } else {
-                // Simple list item
-                View v = inflater.inflate(R.layout.item_todo_compact, parent, false);
-                return new TaskViewHolder(v);
-            }
+            return new TaskViewHolder(inflater.inflate(
+                cardView ? R.layout.item_todo : R.layout.item_todo_compact, parent, false));
         }
     }
     
@@ -134,8 +129,7 @@ public class TodoAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         
         if (holder instanceof HeaderViewHolder) {
             ((HeaderViewHolder) holder).headerText.setText(item.getTitle());
-        } 
-        else if (holder instanceof TaskViewHolder) {
+        } else if (holder instanceof TaskViewHolder) {
             TaskViewHolder t = (TaskViewHolder) holder;
             t.taskText.setText(item.getTaskText());
             t.taskTime.setText(formatTime(item.getTimestamp()));
@@ -148,11 +142,11 @@ public class TodoAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
                     rebuildVisibleList();
                     notifyDataSetChanged();
                 } else {
-                    updateTaskAppearance(t, item);
+                    updateAppearance(t, item);
                 }
             });
             
-            updateTaskAppearance(t, item);
+            updateAppearance(t, item);
             
             t.btnDelete.setOnClickListener(v -> {
                 int pos = t.getAdapterPosition();
@@ -161,8 +155,8 @@ public class TodoAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
                     new AlertDialog.Builder(v.getContext())
                         .setTitle("Delete Task")
                         .setMessage("Delete \"" + toDelete.getTaskText() + "\"?")
-                        .setPositiveButton("Delete", (dialog, which) -> {
-                            allItems.remove(toDelete);
+                        .setPositiveButton("Delete", (d, w) -> {
+                            sourceList.remove(toDelete);
                             rebuildVisibleList();
                             notifyDataSetChanged();
                         })
@@ -173,7 +167,7 @@ public class TodoAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         }
     }
     
-    private void updateTaskAppearance(TaskViewHolder t, TaskItem item) {
+    private void updateAppearance(TaskViewHolder t, TaskItem item) {
         if (item.isCompleted()) {
             t.taskText.setPaintFlags(t.taskText.getPaintFlags() | android.graphics.Paint.STRIKE_THRU_TEXT_FLAG);
             t.taskText.setTextColor(0xFF666666);
@@ -185,29 +179,28 @@ public class TodoAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         }
     }
     
-    private String formatTime(long timestamp) {
-        long diff = System.currentTimeMillis() - timestamp;
-        long hours = TimeUnit.MILLISECONDS.toHours(diff);
-        if (hours < 24) return "Today at " + timeFormat.format(new Date(timestamp));
-        if (hours < 48) return "Yesterday at " + timeFormat.format(new Date(timestamp));
-        return dateFormat.format(new Date(timestamp));
+    private String formatTime(long ts) {
+        long diff = System.currentTimeMillis() - ts;
+        long hrs = TimeUnit.MILLISECONDS.toHours(diff);
+        if (hrs < 24) return "Today at " + timeFormat.format(new Date(ts));
+        if (hrs < 48) return "Yesterday at " + timeFormat.format(new Date(ts));
+        return dateFormat.format(new Date(ts));
     }
     
     @Override
     public int getItemCount() { return visibleItems.size(); }
     
-    public void addTask(String text) {
-        TaskItem task = new TaskItem(TaskItem.TYPE_TASK, text, System.currentTimeMillis());
-        allItems.add(task);
+    public void addTask(TaskItem task) {
+        sourceList.add(task);
         rebuildVisibleList();
         notifyDataSetChanged();
     }
     
-    private String getCategory(long timestamp) {
-        long days = TimeUnit.MILLISECONDS.toDays(System.currentTimeMillis() - timestamp);
+    private String getCategory(long ts) {
+        long days = TimeUnit.MILLISECONDS.toDays(System.currentTimeMillis() - ts);
         if (days == 0) return "Today";
         if (days <= 7) return "Previous 7 Days";
         if (days <= 30) return "Previous 30 Days";
-        return new SimpleDateFormat("MMMM yyyy", Locale.getDefault()).format(new Date(timestamp));
+        return new SimpleDateFormat("MMMM yyyy", Locale.getDefault()).format(new Date(ts));
     }
 }
