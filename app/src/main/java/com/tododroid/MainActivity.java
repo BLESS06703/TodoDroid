@@ -2,8 +2,8 @@ package com.tododroid;
 
 import android.os.Bundle;
 import android.view.View;
-import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageButton;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -14,7 +14,7 @@ public class MainActivity extends AppCompatActivity {
     private ArrayList<String> todoList;
     private TodoAdapter adapter;
     private EditText inputTask;
-    private Button btnAdd;
+    private ImageButton btnAdd;
     private RecyclerView recyclerView;
     
     @Override

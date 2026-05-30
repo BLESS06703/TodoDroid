@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
@@ -25,11 +26,13 @@
             android:textColor="#FFFFFF"
             android:fontFamily="sans-serif-medium" />
 
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="⚙️"
-            android:textSize="22sp" />
+        <ImageButton
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:src="@android:drawable/ic_menu_manage"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="Settings"
+            app:tint="#888888" />
 
     </LinearLayout>
 
@@ -57,19 +60,17 @@
             android:inputType="text"
             android:imeOptions="actionDone" />
 
-        <Button
+        <ImageButton
             android:id="@+id/btn_add"
             android:layout_width="52dp"
             android:layout_height="52dp"
             android:layout_marginStart="10dp"
-            android:text="+"
-            android:textSize="22sp"
-            android:textColor="#FFFFFF"
+            android:src="@android:drawable/ic_input_add"
             android:background="@drawable/btn_add_bg"
+            android:contentDescription="Add task"
+            app:tint="#FFFFFF"
             android:stateListAnimator="@null"
-            android:elevation="0dp"
-            android:insetTop="0dp"
-            android:insetBottom="0dp" />
+            android:elevation="0dp" />
 
     </LinearLayout>
 

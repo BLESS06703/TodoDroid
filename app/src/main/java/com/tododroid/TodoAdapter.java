@@ -4,7 +4,9 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.CheckBox;
+import android.widget.ImageButton;
 import android.widget.TextView;
+import androidx.appcompat.app.AlertDialog;
 import androidx.recyclerview.widget.RecyclerView;
 import java.util.ArrayList;
 
@@ -19,7 +21,7 @@ public class TodoAdapter extends RecyclerView.Adapter<TodoAdapter.ViewHolder> {
     public static class ViewHolder extends RecyclerView.ViewHolder {
         public TextView taskText;
         public CheckBox checkbox;
-        public TextView btnDelete;
+        public ImageButton btnDelete;
         
         public ViewHolder(View itemView) {
             super(itemView);
@@ -41,8 +43,11 @@ public class TodoAdapter extends RecyclerView.Adapter<TodoAdapter.ViewHolder> {
         String task = todoList.get(position);
         holder.taskText.setText(task);
         
+        // Reset checkbox state
         holder.checkbox.setOnCheckedChangeListener(null);
         holder.checkbox.setChecked(false);
+        
+        // Strikethrough on check
         holder.checkbox.setOnCheckedChangeListener((buttonView, isChecked) -> {
             if (isChecked) {
                 holder.taskText.setPaintFlags(
@@ -57,11 +62,19 @@ public class TodoAdapter extends RecyclerView.Adapter<TodoAdapter.ViewHolder> {
             }
         });
         
+        // Delete with confirmation
         holder.btnDelete.setOnClickListener(v -> {
             int pos = holder.getAdapterPosition();
             if (pos != RecyclerView.NO_POSITION) {
-                todoList.remove(pos);
-                notifyItemRemoved(pos);
+                new AlertDialog.Builder(v.getContext())
+                    .setTitle("Delete Task")
+                    .setMessage("Are you sure you want to delete \"" + todoList.get(pos) + "\"?")
+                    .setPositiveButton("Delete", (dialog, which) -> {
+                        todoList.remove(pos);
+                        notifyItemRemoved(pos);
+                    })
+                    .setNegativeButton("Cancel", null)
+                    .show();
             }
         });
     }

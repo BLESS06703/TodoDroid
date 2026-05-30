@@ -36,15 +36,16 @@
             android:textColor="#E0E0E0"
             android:fontFamily="sans-serif" />
 
-        <!-- Delete button -->
-        <TextView
+        <!-- Delete icon button -->
+        <ImageButton
             android:id="@+id/btn_delete"
-            android:layout_width="28dp"
-            android:layout_height="28dp"
-            android:text="🗑"
-            android:textSize="14sp"
-            android:gravity="center"
-            android:layout_marginStart="8dp" />
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:src="@android:drawable/ic_menu_delete"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="Delete task"
+            android:layout_marginStart="4dp"
+            app:tint="#888888" />
 
     </LinearLayout>
 
