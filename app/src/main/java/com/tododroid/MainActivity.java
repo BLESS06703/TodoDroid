@@ -27,8 +27,8 @@ public class MainActivity extends AppCompatActivity {
     private TextView tabTasks, tabNotes;
     private ViewPager2 viewPager;
     private ViewPagerAdapter pagerAdapter;
-    private boolean sortLatest = true;
-    private boolean cardViewMode = true;
+    private boolean mSortLatest = true;
+    private boolean mCardViewMode = true;
     
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -101,11 +101,6 @@ public class MainActivity extends AppCompatActivity {
             selectTab(true);
             Toast.makeText(this, "Task added", Toast.LENGTH_SHORT).show();
         });
-        
-        input.setOnEditorActionListener((v, actionId, event) -> {
-            if (actionId == android.view.inputmethod.EditorInfo.IME_ACTION_DONE) { btnAdd.performClick(); return true; }
-            return false;
-        });
         dialog.show();
     }
     
@@ -125,7 +120,7 @@ public class MainActivity extends AppCompatActivity {
         data.addItem(new TodoItem("Task", "Build TodoDroid app", "", now));
         data.addItem(new TodoItem("Task", "Push code to GitHub", "", now - 3600000));
         data.addItem(new TodoItem("Task", "Design dark theme UI", "", now - 86400000L * 3));
-        TodoItem n1 = new TodoItem("Note", "App Ideas", "Rich text editor, voice notes, cloud sync", now - 86400000L * 2);
+        TodoItem n1 = new TodoItem("Note", "App Ideas", "Rich text editor", now - 86400000L * 2);
         n1.setThemeColor(0xFF1F2937); data.addItem(n1);
     }
     
@@ -140,25 +135,25 @@ public class MainActivity extends AppCompatActivity {
         int[] l = new int[2]; anchor.getLocationOnScreen(l);
         popup.showAtLocation(anchor, Gravity.NO_GRAVITY, l[0] - w + anchor.getWidth(), l[1] + anchor.getHeight() + 12);
         
-        LinearLayout sortLatest = pv.findViewById(R.id.sort_latest);
-        LinearLayout sortOldest = pv.findViewById(R.id.sort_oldest);
+        LinearLayout rowLatest = pv.findViewById(R.id.sort_latest);
+        LinearLayout rowOldest = pv.findViewById(R.id.sort_oldest);
         TextView checkLatest = pv.findViewById(R.id.check_latest);
         TextView checkOldest = pv.findViewById(R.id.check_oldest);
         TextView viewList = pv.findViewById(R.id.view_list);
         TextView viewCard = pv.findViewById(R.id.view_card);
-        TextView sortLatestText = (TextView) sortLatest.getChildAt(0);
-        TextView sortOldestText = (TextView) sortOldest.getChildAt(0);
+        TextView txtLatest = (TextView) rowLatest.getChildAt(0);
+        TextView txtOldest = (TextView) rowOldest.getChildAt(0);
         
         // Set initial state
-        if (sortLatest) {
-            sortLatestText.setTextColor(0xFFFFFFFF); checkLatest.setVisibility(View.VISIBLE);
-            sortOldestText.setTextColor(0xFFB0B0B0); checkOldest.setVisibility(View.INVISIBLE);
+        if (mSortLatest) {
+            txtLatest.setTextColor(0xFFFFFFFF); checkLatest.setVisibility(View.VISIBLE);
+            txtOldest.setTextColor(0xFFB0B0B0); checkOldest.setVisibility(View.INVISIBLE);
         } else {
-            sortOldestText.setTextColor(0xFFFFFFFF); checkOldest.setVisibility(View.VISIBLE);
-            sortLatestText.setTextColor(0xFFB0B0B0); checkLatest.setVisibility(View.INVISIBLE);
+            txtOldest.setTextColor(0xFFFFFFFF); checkOldest.setVisibility(View.VISIBLE);
+            txtLatest.setTextColor(0xFFB0B0B0); checkLatest.setVisibility(View.INVISIBLE);
         }
         
-        if (cardViewMode) {
+        if (mCardViewMode) {
             viewCard.setBackgroundResource(R.drawable.segment_selected); viewCard.setTextColor(0xFFFFFFFF);
             viewList.setBackgroundResource(R.drawable.segment_unselected); viewList.setTextColor(0xFF888888);
         } else {
@@ -166,31 +161,31 @@ public class MainActivity extends AppCompatActivity {
             viewCard.setBackgroundResource(R.drawable.segment_unselected); viewCard.setTextColor(0xFF888888);
         }
         
-        sortLatest.setOnClickListener(v -> {
-            sortLatest = true;
-            sortLatestText.setTextColor(0xFFFFFFFF); checkLatest.setVisibility(View.VISIBLE);
-            sortOldestText.setTextColor(0xFFB0B0B0); checkOldest.setVisibility(View.INVISIBLE);
+        rowLatest.setOnClickListener(v -> {
+            mSortLatest = true;
+            txtLatest.setTextColor(0xFFFFFFFF); checkLatest.setVisibility(View.VISIBLE);
+            txtOldest.setTextColor(0xFFB0B0B0); checkOldest.setVisibility(View.INVISIBLE);
             applySort();
             popup.dismiss();
         });
         
-        sortOldest.setOnClickListener(v -> {
-            sortLatest = false;
-            sortOldestText.setTextColor(0xFFFFFFFF); checkOldest.setVisibility(View.VISIBLE);
-            sortLatestText.setTextColor(0xFFB0B0B0); checkLatest.setVisibility(View.INVISIBLE);
+        rowOldest.setOnClickListener(v -> {
+            mSortLatest = false;
+            txtOldest.setTextColor(0xFFFFFFFF); checkOldest.setVisibility(View.VISIBLE);
+            txtLatest.setTextColor(0xFFB0B0B0); checkLatest.setVisibility(View.INVISIBLE);
             applySort();
             popup.dismiss();
         });
         
         viewList.setOnClickListener(v -> {
-            cardViewMode = false;
+            mCardViewMode = false;
             viewList.setBackgroundResource(R.drawable.segment_selected); viewList.setTextColor(0xFFFFFFFF);
             viewCard.setBackgroundResource(R.drawable.segment_unselected); viewCard.setTextColor(0xFF888888);
             applyView();
         });
         
         viewCard.setOnClickListener(v -> {
-            cardViewMode = true;
+            mCardViewMode = true;
             viewCard.setBackgroundResource(R.drawable.segment_selected); viewCard.setTextColor(0xFFFFFFFF);
             viewList.setBackgroundResource(R.drawable.segment_unselected); viewList.setTextColor(0xFF888888);
             applyView();
@@ -199,12 +194,12 @@ public class MainActivity extends AppCompatActivity {
     
     private void applySort() {
         TasksFragment tf = (TasksFragment) pagerAdapter.getFragment(0);
-        if (tf != null) tf.setSort(sortLatest);
+        if (tf != null) tf.setSort(mSortLatest);
     }
     
     private void applyView() {
         TasksFragment tf = (TasksFragment) pagerAdapter.getFragment(0);
-        if (tf != null) tf.setCardView(cardViewMode);
+        if (tf != null) tf.setCardView(mCardViewMode);
     }
     
     private void setupViewPager() { pagerAdapter = new ViewPagerAdapter(this); viewPager.setAdapter(pagerAdapter); viewPager.setCurrentItem(0); }
