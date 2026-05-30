@@ -5,7 +5,6 @@ import android.os.Bundle;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
-import android.view.inputmethod.EditorInfo;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
@@ -52,25 +51,16 @@ public class MainActivity extends AppCompatActivity {
         tabNotes.setOnClickListener(v -> { viewPager.setCurrentItem(1); selectTab(false); });
         
         viewPager.registerOnPageChangeCallback(new ViewPager2.OnPageChangeCallback() {
-            @Override public void onPageSelected(int position) { selectTab(position == 0); }
+            @Override public void onPageSelected(int p) { selectTab(p == 0); }
         });
         
         btnSort.setOnClickListener(v -> showSortPopup(v));
+        
+        // Create button → Note or Quick Task
         btnCreate.setOnClickListener(v -> showCreateSheet());
         
-        searchInput.setHint("Search...");
-        searchInput.setOnEditorActionListener((v, actionId, event) -> {
-            if (actionId == EditorInfo.IME_ACTION_DONE || actionId == EditorInfo.IME_ACTION_SEARCH) {
-                String text = searchInput.getText().toString().trim();
-                if (!text.isEmpty()) {
-                    GlobalData.getInstance().addItem(new TodoItem("Task", text, "", System.currentTimeMillis()));
-                    refreshCurrentFragment();
-                    searchInput.setText("");
-                }
-                return true;
-            }
-            return false;
-        });
+        // Search is purely search — no creation
+        searchInput.setHint("Search tasks and notes...");
         
         navView.setNavigationItemSelectedListener(item -> {
             int id = item.getItemId();
@@ -95,13 +85,44 @@ public class MainActivity extends AppCompatActivity {
         
         view.findViewById(R.id.create_task).setOnClickListener(v -> {
             sheet.dismiss();
-            viewPager.setCurrentItem(0);
-            selectTab(true);
-            searchInput.requestFocus();
-            Toast.makeText(this, "Type your task below", Toast.LENGTH_SHORT).show();
+            showQuickTaskDialog();
         });
         
         sheet.show();
+    }
+    
+    private void showQuickTaskDialog() {
+        BottomSheetDialog dialog = new BottomSheetDialog(this);
+        View view = LayoutInflater.from(this).inflate(R.layout.dialog_quick_task, null);
+        dialog.setContentView(view);
+        
+        EditText input = view.findViewById(R.id.quick_task_input);
+        TextView btnAdd = view.findViewById(R.id.btn_add_task);
+        
+        btnAdd.setOnClickListener(v -> {
+            String text = input.getText().toString().trim();
+            if (text.isEmpty()) {
+                Toast.makeText(this, "Enter a task", Toast.LENGTH_SHORT).show();
+                return;
+            }
+            GlobalData.getInstance().addItem(
+                new TodoItem("Task", text, "", System.currentTimeMillis()));
+            refreshCurrentFragment();
+            dialog.dismiss();
+            viewPager.setCurrentItem(0);
+            selectTab(true);
+            Toast.makeText(this, "Task added", Toast.LENGTH_SHORT).show();
+        });
+        
+        input.setOnEditorActionListener((v, actionId, event) -> {
+            if (actionId == android.view.inputmethod.EditorInfo.IME_ACTION_DONE) {
+                btnAdd.performClick();
+                return true;
+            }
+            return false;
+        });
+        
+        dialog.show();
     }
     
     private void refreshCurrentFragment() {
@@ -148,8 +169,10 @@ public class MainActivity extends AppCompatActivity {
     private void setupViewPager() { pagerAdapter = new ViewPagerAdapter(this); viewPager.setAdapter(pagerAdapter); viewPager.setCurrentItem(0); }
     
     private void selectTab(boolean t) {
-        if (t) { tabTasks.setBackgroundResource(R.drawable.pill_selected); tabTasks.setTextColor(0xFFFFFFFF); tabNotes.setBackgroundResource(R.drawable.pill_unselected); tabNotes.setTextColor(0xFF888888); }
-        else { tabNotes.setBackgroundResource(R.drawable.pill_selected); tabNotes.setTextColor(0xFFFFFFFF); tabTasks.setBackgroundResource(R.drawable.pill_unselected); tabTasks.setTextColor(0xFF888888); }
+        tabTasks.setBackgroundResource(t ? R.drawable.pill_selected : R.drawable.pill_unselected);
+        tabTasks.setTextColor(t ? 0xFFFFFFFF : 0xFF888888);
+        tabNotes.setBackgroundResource(t ? R.drawable.pill_unselected : R.drawable.pill_selected);
+        tabNotes.setTextColor(t ? 0xFF888888 : 0xFFFFFFFF);
     }
     
     @Override public void onBackPressed() {
