@@ -1,22 +1,20 @@
 package com.tododroid;
 
 import android.os.Bundle;
+import android.view.Gravity;
+import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.View;
-import android.widget.EditText;
 import android.widget.ImageButton;
+import android.widget.PopupWindow;
 import android.widget.TextView;
 import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
-import androidx.fragment.app.Fragment;
-import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
 import androidx.viewpager2.widget.ViewPager2;
 import com.google.android.material.navigation.NavigationView;
-import java.util.ArrayList;
 
 public class MainActivity extends AppCompatActivity {
     
@@ -26,19 +24,11 @@ public class MainActivity extends AppCompatActivity {
     private TextView tabTasks, tabNotes;
     private ViewPager2 viewPager;
     
-    // Tasks
-    private ArrayList<String> todoList;
-    private TodoAdapter taskAdapter;
-    private EditText inputTask;
-    private ImageButton btnAddTask;
-    private RecyclerView recyclerTasks;
-    
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         
-        // Views
         drawerLayout = findViewById(R.id.drawer_layout);
         navView = findViewById(R.id.nav_view);
         btnMenu = findViewById(R.id.btn_menu);
@@ -47,13 +37,10 @@ public class MainActivity extends AppCompatActivity {
         tabNotes = findViewById(R.id.tab_notes);
         viewPager = findViewById(R.id.view_pager);
         
-        // Setup ViewPager2
         setupViewPager();
         
-        // Hamburger menu
         btnMenu.setOnClickListener(v -> drawerLayout.openDrawer(GravityCompat.START));
         
-        // Pill tab switching
         tabTasks.setOnClickListener(v -> {
             viewPager.setCurrentItem(0);
             selectTab(true);
@@ -63,7 +50,6 @@ public class MainActivity extends AppCompatActivity {
             selectTab(false);
         });
         
-        // Sync tabs with swipe
         viewPager.registerOnPageChangeCallback(new ViewPager2.OnPageChangeCallback() {
             @Override
             public void onPageSelected(int position) {
@@ -71,12 +57,9 @@ public class MainActivity extends AppCompatActivity {
             }
         });
         
-        // Sort button
-        btnSort.setOnClickListener(v -> 
-            Toast.makeText(MainActivity.this, "Sort options coming soon", Toast.LENGTH_SHORT).show()
-        );
+        // Sort button - show popup
+        btnSort.setOnClickListener(v -> showSortPopup(v));
         
-        // Navigation drawer
         navView.setNavigationItemSelectedListener(item -> {
             int id = item.getItemId();
             if (id == R.id.nav_tasks) {
@@ -90,6 +73,58 @@ public class MainActivity extends AppCompatActivity {
             }
             drawerLayout.closeDrawer(GravityCompat.START);
             return true;
+        });
+    }
+    
+    private void showSortPopup(View anchor) {
+        View popupView = LayoutInflater.from(this).inflate(R.layout.popup_sort_menu, null);
+        PopupWindow popup = new PopupWindow(
+            popupView,
+            180,
+            android.view.ViewGroup.LayoutParams.WRAP_CONTENT,
+            true
+        );
+        popup.setBackgroundDrawable(new android.graphics.drawable.ColorDrawable(android.graphics.Color.TRANSPARENT));
+        popup.setElevation(12);
+        popup.setAnimationStyle(android.R.style.Animation_Dialog);
+        
+        // Show popup anchored to the sort button
+        popup.showAsDropDown(anchor, -120, 8, Gravity.TOP | Gravity.END);
+        
+        // Sort options
+        TextView sortLatest = popupView.findViewById(R.id.sort_latest);
+        TextView sortOldest = popupView.findViewById(R.id.sort_oldest);
+        TextView viewList = popupView.findViewById(R.id.view_list);
+        TextView viewCard = popupView.findViewById(R.id.view_card);
+        
+        sortLatest.setOnClickListener(v -> {
+            Toast.makeText(this, "Sorted by latest", Toast.LENGTH_SHORT).show();
+            popup.dismiss();
+        });
+        
+        sortOldest.setOnClickListener(v -> {
+            Toast.makeText(this, "Sorted by oldest", Toast.LENGTH_SHORT).show();
+            popup.dismiss();
+        });
+        
+        viewList.setOnClickListener(v -> {
+            viewList.setBackgroundResource(R.drawable.pill_selected_small);
+            viewList.setTextColor(0xFFFFFFFF);
+            viewList.setTypeface(null, android.graphics.Typeface.BOLD);
+            viewCard.setBackgroundResource(R.drawable.pill_unselected_small);
+            viewCard.setTextColor(0xFF888888);
+            viewCard.setTypeface(null, android.graphics.Typeface.NORMAL);
+            Toast.makeText(this, "List view", Toast.LENGTH_SHORT).show();
+        });
+        
+        viewCard.setOnClickListener(v -> {
+            viewCard.setBackgroundResource(R.drawable.pill_selected_small);
+            viewCard.setTextColor(0xFFFFFFFF);
+            viewCard.setTypeface(null, android.graphics.Typeface.BOLD);
+            viewList.setBackgroundResource(R.drawable.pill_unselected_small);
+            viewList.setTextColor(0xFF888888);
+            viewList.setTypeface(null, android.graphics.Typeface.NORMAL);
+            Toast.makeText(this, "Card view", Toast.LENGTH_SHORT).show();
         });
     }
     
