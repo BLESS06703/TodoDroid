@@ -79,16 +79,19 @@ public class MainActivity extends AppCompatActivity {
         
         PopupWindow popup = new PopupWindow(
             popupView,
-            280,
-            android.view.ViewGroup.LayoutParams.WRAP_CONTENT,
+            LinearLayout.LayoutParams.WRAP_CONTENT,
+            LinearLayout.LayoutParams.WRAP_CONTENT,
             true
         );
         popup.setBackgroundDrawable(new android.graphics.drawable.ColorDrawable(android.graphics.Color.TRANSPARENT));
         popup.setElevation(16f);
-        popup.setOverlapAnchor(true);
         
-        // Position: right-aligned below the sort button
-        popup.showAsDropDown(anchor, -210, 16, Gravity.TOP | Gravity.END);
+        // Measure and show
+        popupView.measure(View.MeasureSpec.UNSPECIFIED, View.MeasureSpec.UNSPECIFIED);
+        int popupWidth = popupView.getMeasuredWidth();
+        int offsetX = -(popupWidth - anchor.getWidth());
+        
+        popup.showAsDropDown(anchor, offsetX, 16, Gravity.TOP | Gravity.END);
         
         // Get views
         LinearLayout sortLatest = popupView.findViewById(R.id.sort_latest);
@@ -106,7 +109,6 @@ public class MainActivity extends AppCompatActivity {
             checkLatest.setVisibility(View.VISIBLE);
             sortOldestText.setTextColor(0xFFB0B0B0);
             checkOldest.setVisibility(View.INVISIBLE);
-            Toast.makeText(this, "Sorted by latest", Toast.LENGTH_SHORT).show();
             popup.dismiss();
         });
         
@@ -115,7 +117,6 @@ public class MainActivity extends AppCompatActivity {
             checkOldest.setVisibility(View.VISIBLE);
             sortLatestText.setTextColor(0xFFB0B0B0);
             checkLatest.setVisibility(View.INVISIBLE);
-            Toast.makeText(this, "Sorted by oldest", Toast.LENGTH_SHORT).show();
             popup.dismiss();
         });
         
@@ -126,7 +127,6 @@ public class MainActivity extends AppCompatActivity {
             viewCard.setBackgroundResource(R.drawable.segment_unselected);
             viewCard.setTextColor(0xFF888888);
             viewCard.setTypeface(null, android.graphics.Typeface.NORMAL);
-            Toast.makeText(this, "List view", Toast.LENGTH_SHORT).show();
         });
         
         viewCard.setOnClickListener(v -> {
@@ -136,7 +136,6 @@ public class MainActivity extends AppCompatActivity {
             viewList.setBackgroundResource(R.drawable.segment_unselected);
             viewList.setTextColor(0xFF888888);
             viewList.setTypeface(null, android.graphics.Typeface.NORMAL);
-            Toast.makeText(this, "Card view", Toast.LENGTH_SHORT).show();
         });
     }
     
