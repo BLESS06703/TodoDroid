@@ -60,15 +60,10 @@ public class MainActivity extends AppCompatActivity {
         
         navView.setNavigationItemSelectedListener(item -> {
             int id = item.getItemId();
-            if (id == R.id.nav_tasks) {
-                viewPager.setCurrentItem(0);
-            } else if (id == R.id.nav_completed) {
-                Toast.makeText(MainActivity.this, "Completed coming soon", Toast.LENGTH_SHORT).show();
-            } else if (id == R.id.nav_settings) {
-                Toast.makeText(MainActivity.this, "Settings coming soon", Toast.LENGTH_SHORT).show();
-            } else if (id == R.id.nav_about) {
-                Toast.makeText(MainActivity.this, "TodoDroid - Built in Termux", Toast.LENGTH_SHORT).show();
-            }
+            if (id == R.id.nav_tasks) viewPager.setCurrentItem(0);
+            if (id == R.id.nav_completed) Toast.makeText(this, "Coming soon", Toast.LENGTH_SHORT).show();
+            if (id == R.id.nav_settings) Toast.makeText(this, "Coming soon", Toast.LENGTH_SHORT).show();
+            if (id == R.id.nav_about) Toast.makeText(this, "TodoDroid - Built in Termux", Toast.LENGTH_SHORT).show();
             drawerLayout.closeDrawer(GravityCompat.START);
             return true;
         });
@@ -77,23 +72,24 @@ public class MainActivity extends AppCompatActivity {
     private void showSortPopup(View anchor) {
         View popupView = LayoutInflater.from(this).inflate(R.layout.popup_sort_menu, null);
         
-        PopupWindow popup = new PopupWindow(
-            popupView,
-            LinearLayout.LayoutParams.WRAP_CONTENT,
-            LinearLayout.LayoutParams.WRAP_CONTENT,
-            true
-        );
-        popup.setBackgroundDrawable(new android.graphics.drawable.ColorDrawable(android.graphics.Color.TRANSPARENT));
-        popup.setElevation(16f);
+        int width = (int) (300 * getResources().getDisplayMetrics().density);
         
-        // Measure and show
-        popupView.measure(View.MeasureSpec.UNSPECIFIED, View.MeasureSpec.UNSPECIFIED);
-        int popupWidth = popupView.getMeasuredWidth();
-        int offsetX = -(popupWidth - anchor.getWidth());
+        PopupWindow popup = new PopupWindow(popupView, width, 
+            LinearLayout.LayoutParams.WRAP_CONTENT, true);
+        popup.setBackgroundDrawable(new android.graphics.drawable.ColorDrawable(
+            android.graphics.Color.TRANSPARENT));
+        popup.setElevation(24f);
         
-        popup.showAsDropDown(anchor, offsetX, 16, Gravity.TOP | Gravity.END);
+        int[] location = new int[2];
+        anchor.getLocationOnScreen(location);
+        int anchorX = location[0];
+        int anchorY = location[1];
         
-        // Get views
+        popup.showAtLocation(anchor, Gravity.NO_GRAVITY,
+            anchorX - width + anchor.getWidth(),
+            anchorY + anchor.getHeight() + 12);
+        
+        // Views
         LinearLayout sortLatest = popupView.findViewById(R.id.sort_latest);
         LinearLayout sortOldest = popupView.findViewById(R.id.sort_oldest);
         TextView checkLatest = popupView.findViewById(R.id.check_latest);
@@ -123,25 +119,20 @@ public class MainActivity extends AppCompatActivity {
         viewList.setOnClickListener(v -> {
             viewList.setBackgroundResource(R.drawable.segment_selected);
             viewList.setTextColor(0xFFFFFFFF);
-            viewList.setTypeface(null, android.graphics.Typeface.BOLD);
             viewCard.setBackgroundResource(R.drawable.segment_unselected);
             viewCard.setTextColor(0xFF888888);
-            viewCard.setTypeface(null, android.graphics.Typeface.NORMAL);
         });
         
         viewCard.setOnClickListener(v -> {
             viewCard.setBackgroundResource(R.drawable.segment_selected);
             viewCard.setTextColor(0xFFFFFFFF);
-            viewCard.setTypeface(null, android.graphics.Typeface.BOLD);
             viewList.setBackgroundResource(R.drawable.segment_unselected);
             viewList.setTextColor(0xFF888888);
-            viewList.setTypeface(null, android.graphics.Typeface.NORMAL);
         });
     }
     
     private void setupViewPager() {
-        ViewPagerAdapter pagerAdapter = new ViewPagerAdapter(this);
-        viewPager.setAdapter(pagerAdapter);
+        viewPager.setAdapter(new ViewPagerAdapter(this));
         viewPager.setCurrentItem(0);
     }
     
