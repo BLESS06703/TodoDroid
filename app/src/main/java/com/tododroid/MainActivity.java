@@ -65,23 +65,44 @@ public class MainActivity extends AppCompatActivity {
         
         btnSort.setOnClickListener(v -> showSortPopup(v));
         
-        // Create button - switch to tasks and focus search
+        // Create button
         btnCreate.setOnClickListener(v -> {
-            viewPager.setCurrentItem(0);
-            selectTab(true);
-            searchInput.requestFocus();
+            String text = searchInput.getText().toString().trim();
+            if (!text.isEmpty()) {
+                TasksFragment frag = (TasksFragment) getSupportFragmentManager()
+                    .findFragmentByTag("f" + viewPager.getCurrentItem());
+                if (frag == null && pagerAdapter != null) {
+                    frag = (TasksFragment) pagerAdapter.getFragment(0);
+                }
+                if (frag != null) {
+                    frag.addTask(text);
+                    searchInput.setText("");
+                    Toast.makeText(this, "Task added", Toast.LENGTH_SHORT).show();
+                } else {
+                    Toast.makeText(this, "Switch to Tasks tab first", Toast.LENGTH_SHORT).show();
+                }
+            } else {
+                // No text - just switch to tasks and focus
+                viewPager.setCurrentItem(0);
+                searchInput.requestFocus();
+            }
         });
         
-        // Search input - create task on Enter/Search key
+        // Search - create on Enter
         searchInput.setOnEditorActionListener((v, actionId, event) -> {
             if (actionId == EditorInfo.IME_ACTION_SEARCH ||
                 actionId == EditorInfo.IME_ACTION_DONE ||
-                (event != null && event.getKeyCode() == KeyEvent.KEYCODE_ENTER)) {
+                (event != null && event.getAction() == KeyEvent.ACTION_DOWN &&
+                 event.getKeyCode() == KeyEvent.KEYCODE_ENTER)) {
                 String text = searchInput.getText().toString().trim();
                 if (!text.isEmpty()) {
-                    TasksFragment tasksFrag = (TasksFragment) pagerAdapter.getFragment(0);
-                    if (tasksFrag != null) {
-                        tasksFrag.addTask(text);
+                    TasksFragment frag = (TasksFragment) getSupportFragmentManager()
+                        .findFragmentByTag("f" + viewPager.getCurrentItem());
+                    if (frag == null && pagerAdapter != null) {
+                        frag = (TasksFragment) pagerAdapter.getFragment(0);
+                    }
+                    if (frag != null) {
+                        frag.addTask(text);
                         searchInput.setText("");
                         Toast.makeText(this, "Task added", Toast.LENGTH_SHORT).show();
                     }
