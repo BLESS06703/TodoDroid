@@ -11,7 +11,6 @@ import android.text.style.LeadingMarginSpan;
 import android.text.style.StrikethroughSpan;
 import android.text.style.StyleSpan;
 import android.view.Gravity;
-import android.view.KeyEvent;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.ImageButton;
@@ -30,7 +29,6 @@ public class NoteEditorActivity extends AppCompatActivity {
     private int currentTextColor = 0xFFE0E0E0;
     private boolean isBold = false, isItalic = false, isStrike = false;
     private boolean bulletMode = false, numberMode = false;
-    private int numberCounter = 1;
     private boolean isHandlingNewline = false;
     
     private static final int[][] COLORS = {
@@ -78,23 +76,12 @@ public class NoteEditorActivity extends AppCompatActivity {
             markColorSelected(colorIndex);
         }
         
-        // TextWatcher for auto bullet/number continuation
         editorContent.addTextChangedListener(new TextWatcher() {
-            @Override
-            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
-            
-            @Override
-            public void onTextChanged(CharSequence s, int start, int before, int count) {}
-            
+            @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+            @Override public void onTextChanged(CharSequence s, int start, int before, int count) {}
             @Override
             public void afterTextChanged(Editable s) {
                 if (isHandlingNewline) return;
-                
-                // Find the last inserted character
-                int len = s.length();
-                if (len < 2) return;
-                
-                // Check if a newline was just inserted
                 int selEnd = editorContent.getSelectionEnd();
                 if (selEnd > 0 && s.charAt(selEnd - 1) == '\n') {
                     handleNewline(s, selEnd);
@@ -109,35 +96,25 @@ public class NoteEditorActivity extends AppCompatActivity {
     }
     
     private void handleNewline(Editable s, int cursorPos) {
-        // Find the previous line
-        int prevLineStart = cursorPos - 2; // skip the \n we just typed
+        int prevLineStart = cursorPos - 2;
         while (prevLineStart >= 0 && s.charAt(prevLineStart) != '\n') prevLineStart--;
         prevLineStart++;
-        
         if (prevLineStart >= cursorPos - 1) return;
         
         String prevLine = s.subSequence(prevLineStart, cursorPos - 1).toString();
-        
         isHandlingNewline = true;
         
-        // Check for numbered list: "1. something" or "12. something"
         if (prevLine.matches("^\\d+\\.\\s+.*")) {
             String numPart = prevLine.replaceAll("^(\\d+)\\..*", "$1");
             int num = Integer.parseInt(numPart);
-            
-            // If the line is just "1." with nothing after, end the list
             if (prevLine.trim().matches("^\\d+\\.\\s*$")) {
                 s.replace(prevLineStart, cursorPos, "\n");
                 numberMode = false;
                 highlightButton(R.id.fmt_number, false);
             } else {
-                // Continue numbering
-                int next = num + 1;
-                s.insert(cursorPos, next + ". ");
+                s.insert(cursorPos, (num + 1) + ". ");
             }
-        }
-        // Check for bullet: "• something"
-        else if (prevLine.startsWith("• ")) {
+        } else if (prevLine.startsWith("• ")) {
             if (prevLine.trim().equals("•")) {
                 s.replace(prevLineStart, cursorPos, "\n");
                 bulletMode = false;
@@ -146,7 +123,6 @@ public class NoteEditorActivity extends AppCompatActivity {
                 s.insert(cursorPos, "• ");
             }
         }
-        
         isHandlingNewline = false;
     }
     
@@ -195,8 +171,20 @@ public class NoteEditorActivity extends AppCompatActivity {
             applySpan(new StrikethroughSpan(), isStrike);
             highlightButton(R.id.fmt_strike, isStrike);
         });
-        findViewById(R.id.fmt_bullet).setOnClickListener(v -> toggleBullet());
-        findViewById(R.id.fmt_number).setOnClickListener(v -> toggleNumber());
+        findViewById(R.id.fmt_bullet).setOnClickListener(v -> {
+            bulletMode = !bulletMode;
+            numberMode = false;
+            highlightButton(R.id.fmt_bullet, bulletMode);
+            highlightButton(R.id.fmt_number, false);
+            if (bulletMode) editorContent.getText().insert(editorContent.getSelectionStart(), "• ");
+        });
+        findViewById(R.id.fmt_number).setOnClickListener(v -> {
+            numberMode = !numberMode;
+            bulletMode = false;
+            highlightButton(R.id.fmt_number, numberMode);
+            highlightButton(R.id.fmt_bullet, false);
+            if (numberMode) editorContent.getText().insert(editorContent.getSelectionStart(), "1. ");
+        });
         findViewById(R.id.fmt_align_left).setOnClickListener(v -> { editorContent.setGravity(Gravity.START); highlightAlign(R.id.fmt_align_left); });
         findViewById(R.id.fmt_align_center).setOnClickListener(v -> { editorContent.setGravity(Gravity.CENTER); highlightAlign(R.id.fmt_align_center); });
         findViewById(R.id.fmt_align_right).setOnClickListener(v -> { editorContent.setGravity(Gravity.END); highlightAlign(R.id.fmt_align_right); });
@@ -209,31 +197,8 @@ public class NoteEditorActivity extends AppCompatActivity {
         int end = editorContent.getSelectionEnd();
         if (start == end) return;
         Spannable str = editorContent.getText();
-        if (add) {
-            str.setSpan(span, start, end, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
-        } else {
-            for (Object s : str.getSpans(start, end, span.getClass())) str.removeSpan(s);
-        }
-    }
-    
-    private void toggleBullet() {
-        bulletMode = !bulletMode;
-        numberMode = false;
-        highlightButton(R.id.fmt_bullet, bulletMode);
-        highlightButton(R.id.fmt_number, false);
-        if (bulletMode) {
-            editorContent.getText().insert(editorContent.getSelectionStart(), "• ");
-        }
-    }
-    
-    private void toggleNumber() {
-        numberMode = !numberMode;
-        bulletMode = false;
-        highlightButton(R.id.fmt_number, numberMode);
-        highlightButton(R.id.fmt_bullet, false);
-        if (numberMode) {
-            editorContent.getText().insert(editorContent.getSelectionStart(), "1. ");
-        }
+        if (add) str.setSpan(span, start, end, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+        else for (Object s : str.getSpans(start, end, span.getClass())) str.removeSpan(s);
     }
     
     private void increaseIndent() {
@@ -260,16 +225,11 @@ public class NoteEditorActivity extends AppCompatActivity {
     private void saveNote() {
         String title = editorTitle.getText().toString().trim();
         if (title.isEmpty()) { Toast.makeText(this, "Please enter a title", Toast.LENGTH_SHORT).show(); return; }
-        
         String htmlContent = Html.toHtml(editorContent.getText(), Html.TO_HTML_PARAGRAPH_LINES_INDIVIDUAL);
-        
         if (noteIndex >= 0) GlobalData.getInstance().getItems().remove(noteIndex);
-        
-        TodoItem note = new TodoItem("Note", title, htmlContent,
-            getIntent().getLongExtra("note_timestamp", System.currentTimeMillis()));
+        TodoItem note = new TodoItem("Note", title, htmlContent, getIntent().getLongExtra("note_timestamp", System.currentTimeMillis()));
         note.setThemeColor(currentColor);
         GlobalData.getInstance().addItem(note);
-        
         Toast.makeText(this, "Note saved!", Toast.LENGTH_SHORT).show();
         finish();
     }
