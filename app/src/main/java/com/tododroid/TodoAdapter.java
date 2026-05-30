@@ -8,8 +8,11 @@ import android.widget.ImageButton;
 import android.widget.TextView;
 import androidx.appcompat.app.AlertDialog;
 import androidx.recyclerview.widget.RecyclerView;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Date;
+import java.util.Locale;
 import java.util.concurrent.TimeUnit;
 
 public class TodoAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
@@ -25,7 +28,6 @@ public class TodoAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         return items.get(position).getType();
     }
     
-    // --- Header ViewHolder ---
     public static class HeaderViewHolder extends RecyclerView.ViewHolder {
         public TextView headerText;
         public HeaderViewHolder(View itemView) {
@@ -34,7 +36,6 @@ public class TodoAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         }
     }
     
-    // --- Task ViewHolder ---
     public static class TaskViewHolder extends RecyclerView.ViewHolder {
         public TextView taskText;
         public CheckBox checkbox;
@@ -71,7 +72,6 @@ public class TodoAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
             TaskViewHolder t = (TaskViewHolder) holder;
             t.taskText.setText(item.getTaskText());
             
-            // Checkbox state
             t.checkbox.setOnCheckedChangeListener(null);
             t.checkbox.setChecked(item.isCompleted());
             t.checkbox.setOnCheckedChangeListener((buttonView, isChecked) -> {
@@ -87,14 +87,12 @@ public class TodoAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
                 }
             });
             
-            // Apply strikethrough if already completed
             if (item.isCompleted()) {
                 t.taskText.setPaintFlags(
                     t.taskText.getPaintFlags() | android.graphics.Paint.STRIKE_THRU_TEXT_FLAG);
                 t.taskText.setTextColor(0xFF666666);
             }
             
-            // Delete
             t.btnDelete.setOnClickListener(v -> {
                 int pos = t.getAdapterPosition();
                 if (pos != RecyclerView.NO_POSITION) {
@@ -119,11 +117,9 @@ public class TodoAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         return items.size();
     }
     
-    // Rebuild headers after deletion
     public void updateHeaders() {
         for (int i = items.size() - 1; i >= 0; i--) {
             if (items.get(i).getType() == TaskItem.TYPE_HEADER) {
-                // Check if this header has any tasks under it
                 boolean hasTasks = false;
                 for (int j = i + 1; j < items.size(); j++) {
                     if (items.get(j).getType() == TaskItem.TYPE_HEADER) break;
@@ -137,22 +133,18 @@ public class TodoAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         notifyDataSetChanged();
     }
     
-    // Add a task with auto-categorization
     public void addTask(String text) {
         long now = System.currentTimeMillis();
         String category = getCategory(now);
         
-        // Find or create the header
         int headerIndex = findHeaderIndex(category);
         if (headerIndex == -1) {
             items.add(new TaskItem(TaskItem.TYPE_HEADER, category));
             headerIndex = items.size() - 1;
         }
         
-        // Insert task right after its header
         TaskItem task = new TaskItem(TaskItem.TYPE_TASK, text, now);
         int insertAt = headerIndex + 1;
-        // Move past any tasks already under this header
         while (insertAt < items.size() && items.get(insertAt).getType() == TaskItem.TYPE_TASK) {
             insertAt++;
         }
@@ -179,8 +171,7 @@ public class TodoAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         if (days <= 7) return "Previous 7 Days";
         if (days <= 30) return "Previous 30 Days";
         
-        Calendar cal = Calendar.getInstance();
-        cal.setTimeInMillis(timestamp);
-        return cal.get(Calendar.MONTH) + " " + cal.get(Calendar.YEAR);
+        SimpleDateFormat sdf = new SimpleDateFormat("MMMM yyyy", Locale.getDefault());
+        return sdf.format(new Date(timestamp));
     }
 }
