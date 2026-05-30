@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="#121212"
+    android:paddingHorizontal="18dp">
+
+    <!-- Input row -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:layout_marginBottom="20dp">
+
+        <EditText
+            android:id="@+id/input_task"
+            android:layout_width="0dp"
+            android:layout_height="54dp"
+            android:layout_weight="1"
+            android:hint="Add a new task..."
+            android:textColorHint="#707070"
+            android:textColor="#FFFFFF"
+            android:textSize="15sp"
+            android:fontFamily="sans-serif"
+            android:background="@drawable/input_bg"
+            android:paddingHorizontal="18dp"
+            android:gravity="center_vertical"
+            android:includeFontPadding="false"
+            android:inputType="text"
+            android:imeOptions="actionDone" />
+
+        <ImageButton
+            android:id="@+id/btn_add_task"
+            android:layout_width="54dp"
+            android:layout_height="54dp"
+            android:layout_marginStart="12dp"
+            android:src="@android:drawable/ic_input_add"
+            android:background="@drawable/btn_add_bg"
+            android:contentDescription="Add task"
+            android:layout_gravity="center_vertical"
+            android:padding="14dp"
+            android:stateListAnimator="@null"
+            android:elevation="4dp"
+            app:tint="#FFFFFF" />
+
+    </LinearLayout>
+
+    <!-- Section label -->
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Current Tasks"
+        android:textSize="12sp"
+        android:textColor="#777777"
+        android:fontFamily="sans-serif-medium"
+        android:letterSpacing="0.08"
+        android:layout_marginBottom="14dp"
+        android:includeFontPadding="false"
+        android:textAllCaps="true" />
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/recycler_tasks"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:clipToPadding="false"
+        android:paddingBottom="80dp" />
+
+</LinearLayout>
