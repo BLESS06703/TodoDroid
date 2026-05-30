@@ -1,5 +1,6 @@
 package com.tododroid;
 
+import android.text.Html;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -37,9 +38,8 @@ public class NoteAdapter extends RecyclerView.Adapter<NoteAdapter.ViewHolder> {
     
     @Override
     public ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
-        View view = LayoutInflater.from(parent.getContext())
-            .inflate(R.layout.item_note, parent, false);
-        return new ViewHolder(view);
+        return new ViewHolder(LayoutInflater.from(parent.getContext())
+            .inflate(R.layout.item_note, parent, false));
     }
     
     @Override
@@ -47,22 +47,17 @@ public class NoteAdapter extends RecyclerView.Adapter<NoteAdapter.ViewHolder> {
         TodoItem note = notes.get(position);
         holder.title.setText(note.getTitle());
         
-        String preview = note.getContent();
-        if (preview.length() > 80) {
-            preview = preview.substring(0, 80) + "...";
-        }
-        holder.preview.setText(preview.isEmpty() ? "No additional text" : preview);
+        // Strip HTML for preview
+        String plain = Html.fromHtml(note.getContent(), Html.FROM_HTML_MODE_LEGACY).toString();
+        if (plain.length() > 80) plain = plain.substring(0, 80) + "...";
+        holder.preview.setText(plain.isEmpty() ? "No additional text" : plain);
         holder.time.setText(dateFormat.format(new Date(note.getTimestamp())));
         
         holder.itemView.setOnClickListener(v -> {
-            if (listener != null) {
-                listener.onNoteClick(note, position);
-            }
+            if (listener != null) listener.onNoteClick(note, position);
         });
     }
     
     @Override
-    public int getItemCount() {
-        return notes.size();
-    }
+    public int getItemCount() { return notes.size(); }
 }

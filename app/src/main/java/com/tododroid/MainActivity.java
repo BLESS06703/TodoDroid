@@ -16,6 +16,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.viewpager2.widget.ViewPager2;
+import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.google.android.material.navigation.NavigationView;
 
 public class MainActivity extends AppCompatActivity {
@@ -47,33 +48,24 @@ public class MainActivity extends AppCompatActivity {
         seedDemoData();
         
         btnMenu.setOnClickListener(v -> drawerLayout.openDrawer(GravityCompat.START));
-        
         tabTasks.setOnClickListener(v -> { viewPager.setCurrentItem(0); selectTab(true); });
         tabNotes.setOnClickListener(v -> { viewPager.setCurrentItem(1); selectTab(false); });
         
         viewPager.registerOnPageChangeCallback(new ViewPager2.OnPageChangeCallback() {
-            @Override
-            public void onPageSelected(int position) { selectTab(position == 0); }
+            @Override public void onPageSelected(int position) { selectTab(position == 0); }
         });
         
         btnSort.setOnClickListener(v -> showSortPopup(v));
+        btnCreate.setOnClickListener(v -> showCreateSheet());
         
-        // Create button → opens Note Editor directly
-        btnCreate.setOnClickListener(v -> {
-            startActivity(new Intent(MainActivity.this, NoteEditorActivity.class));
-        });
-        
-        // Search → quick task creation on Enter
-        searchInput.setHint("Type task and press Enter...");
+        searchInput.setHint("Search...");
         searchInput.setOnEditorActionListener((v, actionId, event) -> {
             if (actionId == EditorInfo.IME_ACTION_DONE || actionId == EditorInfo.IME_ACTION_SEARCH) {
                 String text = searchInput.getText().toString().trim();
                 if (!text.isEmpty()) {
-                    GlobalData.getInstance().addItem(
-                        new TodoItem("Task", text, "", System.currentTimeMillis()));
+                    GlobalData.getInstance().addItem(new TodoItem("Task", text, "", System.currentTimeMillis()));
                     refreshCurrentFragment();
                     searchInput.setText("");
-                    Toast.makeText(this, "Task added", Toast.LENGTH_SHORT).show();
                 }
                 return true;
             }
@@ -91,6 +83,27 @@ public class MainActivity extends AppCompatActivity {
         });
     }
     
+    private void showCreateSheet() {
+        BottomSheetDialog sheet = new BottomSheetDialog(this);
+        View view = LayoutInflater.from(this).inflate(R.layout.bottom_sheet_create, null);
+        sheet.setContentView(view);
+        
+        view.findViewById(R.id.create_note).setOnClickListener(v -> {
+            sheet.dismiss();
+            startActivity(new Intent(MainActivity.this, NoteEditorActivity.class));
+        });
+        
+        view.findViewById(R.id.create_task).setOnClickListener(v -> {
+            sheet.dismiss();
+            viewPager.setCurrentItem(0);
+            selectTab(true);
+            searchInput.requestFocus();
+            Toast.makeText(this, "Type your task below", Toast.LENGTH_SHORT).show();
+        });
+        
+        sheet.show();
+    }
+    
     private void refreshCurrentFragment() {
         if (pagerAdapter != null) {
             TasksFragment tf = (TasksFragment) pagerAdapter.getFragment(0);
@@ -104,77 +117,42 @@ public class MainActivity extends AppCompatActivity {
         GlobalData data = GlobalData.getInstance();
         if (!data.getItems().isEmpty()) return;
         long now = System.currentTimeMillis();
-        data.addItem(new TodoItem("Task", "Build TodoDroid app", "Complete Android app with Termux", now));
+        data.addItem(new TodoItem("Task", "Build TodoDroid app", "", now));
         data.addItem(new TodoItem("Task", "Push code to GitHub", "", now - 3600000));
-        data.addItem(new TodoItem("Task", "Design dark theme UI", "Purple accent on dark background", now - 86400000L * 3));
-        TodoItem note1 = new TodoItem("Note", "App Ideas", "Rich text editor, voice notes, cloud sync", now - 86400000L * 2);
-        note1.setThemeColor(0xFF1F2937);
-        data.addItem(note1);
-        TodoItem note2 = new TodoItem("Note", "Meeting Notes", "Module architecture and bottom nav design", now - 86400000L * 5);
-        note2.setThemeColor(0xFFEDE9FE);
-        data.addItem(note2);
+        TodoItem n1 = new TodoItem("Note", "App Ideas", "Rich text editor, voice notes, cloud sync", now - 86400000L * 2);
+        n1.setThemeColor(0xFF1F2937); data.addItem(n1);
     }
     
-    @Override
-    protected void onResume() {
-        super.onResume();
-        refreshCurrentFragment();
-    }
+    @Override protected void onResume() { super.onResume(); refreshCurrentFragment(); }
     
     private void showSortPopup(View anchor) {
-        View popupView = LayoutInflater.from(this).inflate(R.layout.popup_sort_menu, null);
-        int width = (int) (300 * getResources().getDisplayMetrics().density);
-        PopupWindow popup = new PopupWindow(popupView, width, LinearLayout.LayoutParams.WRAP_CONTENT, true);
+        View pv = LayoutInflater.from(this).inflate(R.layout.popup_sort_menu, null);
+        int w = (int) (300 * getResources().getDisplayMetrics().density);
+        PopupWindow popup = new PopupWindow(pv, w, LinearLayout.LayoutParams.WRAP_CONTENT, true);
         popup.setBackgroundDrawable(new android.graphics.drawable.ColorDrawable(android.graphics.Color.TRANSPARENT));
         popup.setElevation(24f);
-        int[] loc = new int[2]; anchor.getLocationOnScreen(loc);
-        popup.showAtLocation(anchor, Gravity.NO_GRAVITY, loc[0] - width + anchor.getWidth(), loc[1] + anchor.getHeight() + 12);
+        int[] l = new int[2]; anchor.getLocationOnScreen(l);
+        popup.showAtLocation(anchor, Gravity.NO_GRAVITY, l[0] - w + anchor.getWidth(), l[1] + anchor.getHeight() + 12);
         
-        LinearLayout sortLatest = popupView.findViewById(R.id.sort_latest);
-        LinearLayout sortOldest = popupView.findViewById(R.id.sort_oldest);
-        TextView checkLatest = popupView.findViewById(R.id.check_latest);
-        TextView checkOldest = popupView.findViewById(R.id.check_oldest);
-        TextView viewList = popupView.findViewById(R.id.view_list);
-        TextView viewCard = popupView.findViewById(R.id.view_card);
-        TextView sortLatestText = (TextView) sortLatest.getChildAt(0);
-        TextView sortOldestText = (TextView) sortOldest.getChildAt(0);
+        LinearLayout sl = pv.findViewById(R.id.sort_latest), so = pv.findViewById(R.id.sort_oldest);
+        TextView cl = pv.findViewById(R.id.check_latest), co = pv.findViewById(R.id.check_oldest);
+        TextView vl = pv.findViewById(R.id.view_list), vc = pv.findViewById(R.id.view_card);
+        TextView slt = (TextView) sl.getChildAt(0), sot = (TextView) so.getChildAt(0);
         
-        sortLatest.setOnClickListener(v -> {
-            sortLatestText.setTextColor(0xFFFFFFFF); checkLatest.setVisibility(View.VISIBLE);
-            sortOldestText.setTextColor(0xFFB0B0B0); checkOldest.setVisibility(View.INVISIBLE); popup.dismiss();
-        });
-        sortOldest.setOnClickListener(v -> {
-            sortOldestText.setTextColor(0xFFFFFFFF); checkOldest.setVisibility(View.VISIBLE);
-            sortLatestText.setTextColor(0xFFB0B0B0); checkLatest.setVisibility(View.INVISIBLE); popup.dismiss();
-        });
-        viewList.setOnClickListener(v -> {
-            viewList.setBackgroundResource(R.drawable.segment_selected); viewList.setTextColor(0xFFFFFFFF);
-            viewCard.setBackgroundResource(R.drawable.segment_unselected); viewCard.setTextColor(0xFF888888);
-        });
-        viewCard.setOnClickListener(v -> {
-            viewCard.setBackgroundResource(R.drawable.segment_selected); viewCard.setTextColor(0xFFFFFFFF);
-            viewList.setBackgroundResource(R.drawable.segment_unselected); viewList.setTextColor(0xFF888888);
-        });
+        sl.setOnClickListener(v -> { slt.setTextColor(0xFFFFFFFF); cl.setVisibility(View.VISIBLE); sot.setTextColor(0xFFB0B0B0); co.setVisibility(View.INVISIBLE); popup.dismiss(); });
+        so.setOnClickListener(v -> { sot.setTextColor(0xFFFFFFFF); co.setVisibility(View.VISIBLE); slt.setTextColor(0xFFB0B0B0); cl.setVisibility(View.INVISIBLE); popup.dismiss(); });
+        vl.setOnClickListener(v -> { vl.setBackgroundResource(R.drawable.segment_selected); vl.setTextColor(0xFFFFFFFF); vc.setBackgroundResource(R.drawable.segment_unselected); vc.setTextColor(0xFF888888); });
+        vc.setOnClickListener(v -> { vc.setBackgroundResource(R.drawable.segment_selected); vc.setTextColor(0xFFFFFFFF); vl.setBackgroundResource(R.drawable.segment_unselected); vl.setTextColor(0xFF888888); });
     }
     
-    private void setupViewPager() {
-        pagerAdapter = new ViewPagerAdapter(this);
-        viewPager.setAdapter(pagerAdapter);
-        viewPager.setCurrentItem(0);
+    private void setupViewPager() { pagerAdapter = new ViewPagerAdapter(this); viewPager.setAdapter(pagerAdapter); viewPager.setCurrentItem(0); }
+    
+    private void selectTab(boolean t) {
+        if (t) { tabTasks.setBackgroundResource(R.drawable.pill_selected); tabTasks.setTextColor(0xFFFFFFFF); tabNotes.setBackgroundResource(R.drawable.pill_unselected); tabNotes.setTextColor(0xFF888888); }
+        else { tabNotes.setBackgroundResource(R.drawable.pill_selected); tabNotes.setTextColor(0xFFFFFFFF); tabTasks.setBackgroundResource(R.drawable.pill_unselected); tabTasks.setTextColor(0xFF888888); }
     }
     
-    private void selectTab(boolean isTasks) {
-        if (isTasks) {
-            tabTasks.setBackgroundResource(R.drawable.pill_selected); tabTasks.setTextColor(0xFFFFFFFF);
-            tabNotes.setBackgroundResource(R.drawable.pill_unselected); tabNotes.setTextColor(0xFF888888);
-        } else {
-            tabNotes.setBackgroundResource(R.drawable.pill_selected); tabNotes.setTextColor(0xFFFFFFFF);
-            tabTasks.setBackgroundResource(R.drawable.pill_unselected); tabTasks.setTextColor(0xFF888888);
-        }
-    }
-    
-    @Override
-    public void onBackPressed() {
+    @Override public void onBackPressed() {
         if (drawerLayout.isDrawerOpen(GravityCompat.START)) drawerLayout.closeDrawer(GravityCompat.START);
         else super.onBackPressed();
     }

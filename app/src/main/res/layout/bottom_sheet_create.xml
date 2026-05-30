@@ -8,7 +8,6 @@
     android:paddingTop="20dp"
     android:paddingBottom="40dp">
 
-    <!-- Handle bar -->
     <View
         android:layout_width="40dp"
         android:layout_height="4dp"
@@ -25,9 +24,8 @@
         android:fontFamily="sans-serif-medium"
         android:layout_marginBottom="20dp" />
 
-    <!-- Task option -->
     <LinearLayout
-        android:id="@+id/create_task"
+        android:id="@+id/create_note"
         android:layout_width="match_parent"
         android:layout_height="64dp"
         android:orientation="horizontal"
@@ -41,16 +39,14 @@
         <LinearLayout
             android:layout_width="48dp"
             android:layout_height="48dp"
-            android:background="@drawable/create_icon_bg_task"
+            android:background="@drawable/create_icon_bg_note"
             android:gravity="center"
             android:layout_marginEnd="16dp">
-
             <ImageView
                 android:layout_width="24dp"
                 android:layout_height="24dp"
-                android:src="@android:drawable/ic_menu_agenda"
+                android:src="@android:drawable/ic_menu_edit"
                 android:tint="#FFFFFF" />
-
         </LinearLayout>
 
         <LinearLayout
@@ -58,37 +54,31 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:orientation="vertical">
-
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Task"
+                android:text="Note"
                 android:textSize="16sp"
                 android:textColor="#FFFFFF"
                 android:fontFamily="sans-serif-medium" />
-
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Add a new task to your list"
+                android:text="Rich text editor with formatting"
                 android:textSize="12sp"
                 android:textColor="#888888"
                 android:fontFamily="sans-serif"
                 android:layout_marginTop="2dp" />
-
         </LinearLayout>
-
         <ImageView
             android:layout_width="20dp"
             android:layout_height="20dp"
             android:src="@android:drawable/ic_menu_add"
             android:tint="#888888" />
-
     </LinearLayout>
 
-    <!-- Note option -->
     <LinearLayout
-        android:id="@+id/create_note"
+        android:id="@+id/create_task"
         android:layout_width="match_parent"
         android:layout_height="64dp"
         android:orientation="horizontal"
@@ -101,16 +91,14 @@
         <LinearLayout
             android:layout_width="48dp"
             android:layout_height="48dp"
-            android:background="@drawable/create_icon_bg_note"
+            android:background="@drawable/create_icon_bg_task"
             android:gravity="center"
             android:layout_marginEnd="16dp">
-
             <ImageView
                 android:layout_width="24dp"
                 android:layout_height="24dp"
-                android:src="@android:drawable/ic_menu_edit"
+                android:src="@android:drawable/ic_menu_agenda"
                 android:tint="#FFFFFF" />
-
         </LinearLayout>
 
         <LinearLayout
@@ -118,32 +106,27 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:orientation="vertical">
-
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Note"
+                android:text="Quick Task"
                 android:textSize="16sp"
                 android:textColor="#FFFFFF"
                 android:fontFamily="sans-serif-medium" />
-
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Write a rich note with formatting"
+                android:text="Add a simple task to your list"
                 android:textSize="12sp"
                 android:textColor="#888888"
                 android:fontFamily="sans-serif"
                 android:layout_marginTop="2dp" />
-
         </LinearLayout>
-
         <ImageView
             android:layout_width="20dp"
             android:layout_height="20dp"
             android:src="@android:drawable/ic_menu_add"
             android:tint="#888888" />
-
     </LinearLayout>
 
 </LinearLayout>
