@@ -16,6 +16,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.viewpager2.widget.ViewPager2;
+import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.google.android.material.navigation.NavigationView;
 
 public class MainActivity extends AppCompatActivity {
@@ -64,31 +65,10 @@ public class MainActivity extends AppCompatActivity {
         });
         
         btnSort.setOnClickListener(v -> showSortPopup(v));
+        btnCreate.setOnClickListener(v -> showCreateSheet());
         
-        // Create button
-        btnCreate.setOnClickListener(v -> {
-            String text = searchInput.getText().toString().trim();
-            if (!text.isEmpty()) {
-                TasksFragment frag = (TasksFragment) getSupportFragmentManager()
-                    .findFragmentByTag("f" + viewPager.getCurrentItem());
-                if (frag == null && pagerAdapter != null) {
-                    frag = (TasksFragment) pagerAdapter.getFragment(0);
-                }
-                if (frag != null) {
-                    frag.addTask(text);
-                    searchInput.setText("");
-                    Toast.makeText(this, "Task added", Toast.LENGTH_SHORT).show();
-                } else {
-                    Toast.makeText(this, "Switch to Tasks tab first", Toast.LENGTH_SHORT).show();
-                }
-            } else {
-                // No text - just switch to tasks and focus
-                viewPager.setCurrentItem(0);
-                searchInput.requestFocus();
-            }
-        });
-        
-        // Search - create on Enter
+        // Search: on Enter, create task if text exists
+        searchInput.setHint("Search tasks and notes...");
         searchInput.setOnEditorActionListener((v, actionId, event) -> {
             if (actionId == EditorInfo.IME_ACTION_SEARCH ||
                 actionId == EditorInfo.IME_ACTION_DONE ||
@@ -96,12 +76,9 @@ public class MainActivity extends AppCompatActivity {
                  event.getKeyCode() == KeyEvent.KEYCODE_ENTER)) {
                 String text = searchInput.getText().toString().trim();
                 if (!text.isEmpty()) {
-                    TasksFragment frag = (TasksFragment) getSupportFragmentManager()
-                        .findFragmentByTag("f" + viewPager.getCurrentItem());
-                    if (frag == null && pagerAdapter != null) {
-                        frag = (TasksFragment) pagerAdapter.getFragment(0);
-                    }
+                    TasksFragment frag = (TasksFragment) pagerAdapter.getFragment(0);
                     if (frag != null) {
+                        viewPager.setCurrentItem(0);
                         frag.addTask(text);
                         searchInput.setText("");
                         Toast.makeText(this, "Task added", Toast.LENGTH_SHORT).show();
@@ -123,9 +100,30 @@ public class MainActivity extends AppCompatActivity {
         });
     }
     
+    private void showCreateSheet() {
+        BottomSheetDialog sheet = new BottomSheetDialog(this);
+        View sheetView = LayoutInflater.from(this).inflate(R.layout.bottom_sheet_create, null);
+        sheet.setContentView(sheetView);
+        
+        sheetView.findViewById(R.id.create_task).setOnClickListener(v -> {
+            sheet.dismiss();
+            viewPager.setCurrentItem(0);
+            selectTab(true);
+            searchInput.requestFocus();
+        });
+        
+        sheetView.findViewById(R.id.create_note).setOnClickListener(v -> {
+            sheet.dismiss();
+            viewPager.setCurrentItem(1);
+            selectTab(false);
+            Toast.makeText(this, "Note editor coming soon", Toast.LENGTH_SHORT).show();
+        });
+        
+        sheet.show();
+    }
+    
     private void showSortPopup(View anchor) {
         View popupView = LayoutInflater.from(this).inflate(R.layout.popup_sort_menu, null);
-        
         int width = (int) (300 * getResources().getDisplayMetrics().density);
         
         PopupWindow popup = new PopupWindow(popupView, width,
@@ -157,7 +155,6 @@ public class MainActivity extends AppCompatActivity {
             checkOldest.setVisibility(View.INVISIBLE);
             popup.dismiss();
         });
-        
         sortOldest.setOnClickListener(v -> {
             sortOldestText.setTextColor(0xFFFFFFFF);
             checkOldest.setVisibility(View.VISIBLE);
@@ -165,14 +162,12 @@ public class MainActivity extends AppCompatActivity {
             checkLatest.setVisibility(View.INVISIBLE);
             popup.dismiss();
         });
-        
         viewList.setOnClickListener(v -> {
             viewList.setBackgroundResource(R.drawable.segment_selected);
             viewList.setTextColor(0xFFFFFFFF);
             viewCard.setBackgroundResource(R.drawable.segment_unselected);
             viewCard.setTextColor(0xFF888888);
         });
-        
         viewCard.setOnClickListener(v -> {
             viewCard.setBackgroundResource(R.drawable.segment_selected);
             viewCard.setTextColor(0xFFFFFFFF);
