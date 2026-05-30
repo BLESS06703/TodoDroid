@@ -34,45 +34,40 @@ public class TasksFragment extends Fragment {
         
         recyclerTasks.setLayoutManager(new LinearLayoutManager(getContext()));
         
-        ArrayList<TaskItem> taskItems = convertToTaskItems(GlobalData.getInstance().getTasks());
-        adapter = new TodoAdapter(taskItems);
-        recyclerTasks.setAdapter(adapter);
+        loadTasks();
         
         toggleCompleted.setOnClickListener(v -> {
-            boolean newState = !adapter.isHideCompleted();
-            adapter.setHideCompleted(newState);
-            if (newState) {
-                toggleText.setText("Show done");
-                toggleDot.setBackgroundResource(R.drawable.toggle_dot_on);
-            } else {
-                toggleText.setText("Hide done");
-                toggleDot.setBackgroundResource(R.drawable.toggle_dot_off);
+            if (adapter != null) {
+                boolean newState = !adapter.isHideCompleted();
+                adapter.setHideCompleted(newState);
+                toggleText.setText(newState ? "Show done" : "Hide done");
+                toggleDot.setBackgroundResource(newState ? R.drawable.toggle_dot_on : R.drawable.toggle_dot_off);
             }
         });
         
         return view;
     }
     
-    public void refreshData() {
-        if (adapter != null) {
-            // Rebuild adapter with fresh data
-            adapter = new TodoAdapter(convertToTaskItems(GlobalData.getInstance().getTasks()));
-            recyclerTasks.setAdapter(adapter);
+    private void loadTasks() {
+        ArrayList<TaskItem> taskItems = new ArrayList<>();
+        
+        for (TodoItem item : GlobalData.getInstance().getTasks()) {
+            taskItems.add(new TaskItem(TaskItem.TYPE_TASK, item.getTitle(), item.getTimestamp()));
         }
+        
+        adapter = new TodoAdapter(taskItems);
+        recyclerTasks.setAdapter(adapter);
     }
     
-    private ArrayList<TaskItem> convertToTaskItems(ArrayList<TodoItem> todoItems) {
-        ArrayList<TaskItem> items = new ArrayList<>();
-        for (TodoItem item : todoItems) {
-            items.add(new TaskItem(TaskItem.TYPE_TASK, item.getTitle(), item.getTimestamp()));
+    public void refreshData() {
+        if (recyclerTasks != null) {
+            loadTasks();
         }
-        return items;
     }
     
     public void addTask(String text) {
         GlobalData.getInstance().addItem(
             new TodoItem("Task", text, "", System.currentTimeMillis()));
         refreshData();
-        recyclerTasks.smoothScrollToPosition(0);
     }
 }
