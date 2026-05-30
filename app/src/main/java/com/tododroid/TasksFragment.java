@@ -4,6 +4,8 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.LinearLayout;
+import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
@@ -18,6 +20,9 @@ public class TasksFragment extends Fragment {
     private ArrayList<TaskItem> items;
     private TodoAdapter adapter;
     private RecyclerView recyclerTasks;
+    private LinearLayout toggleCompleted;
+    private TextView toggleText;
+    private View toggleDot;
     
     @Nullable
     @Override
@@ -27,12 +32,27 @@ public class TasksFragment extends Fragment {
         
         items = new ArrayList<>();
         recyclerTasks = view.findViewById(R.id.recycler_tasks);
+        toggleCompleted = view.findViewById(R.id.toggle_completed);
+        toggleText = view.findViewById(R.id.toggle_text);
+        toggleDot = view.findViewById(R.id.toggle_dot);
         
         recyclerTasks.setLayoutManager(new LinearLayoutManager(getContext()));
         adapter = new TodoAdapter(items);
         recyclerTasks.setAdapter(adapter);
         
         seedDemoTasks();
+        
+        toggleCompleted.setOnClickListener(v -> {
+            boolean newState = !adapter.isHideCompleted();
+            adapter.setHideCompleted(newState);
+            if (newState) {
+                toggleText.setText("Show done");
+                toggleDot.setBackgroundResource(R.drawable.toggle_dot_on);
+            } else {
+                toggleText.setText("Hide done");
+                toggleDot.setBackgroundResource(R.drawable.toggle_dot_off);
+            }
+        });
         
         return view;
     }

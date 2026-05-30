@@ -17,17 +17,61 @@ import java.util.concurrent.TimeUnit;
 
 public class TodoAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     
-    private ArrayList<TaskItem> items;
+    private ArrayList<TaskItem> allItems;
+    private ArrayList<TaskItem> visibleItems;
+    private boolean hideCompleted = false;
     private SimpleDateFormat timeFormat = new SimpleDateFormat("hh:mm a", Locale.getDefault());
     private SimpleDateFormat dateFormat = new SimpleDateFormat("MMM d, hh:mm a", Locale.getDefault());
     
     public TodoAdapter(ArrayList<TaskItem> items) {
-        this.items = items;
+        this.allItems = items;
+        rebuildVisibleList();
+    }
+    
+    public void setHideCompleted(boolean hide) {
+        this.hideCompleted = hide;
+        rebuildVisibleList();
+        notifyDataSetChanged();
+    }
+    
+    public boolean isHideCompleted() {
+        return hideCompleted;
+    }
+    
+    private void rebuildVisibleList() {
+        visibleItems = new ArrayList<>();
+        String currentHeader = null;
+        
+        for (TaskItem item : allItems) {
+            if (item.getType() == TaskItem.TYPE_HEADER) {
+                currentHeader = item.getTitle();
+                visibleItems.add(item);
+            } else if (item.getType() == TaskItem.TYPE_TASK) {
+                if (hideCompleted && item.isCompleted()) {
+                    continue;
+                }
+                visibleItems.add(item);
+            }
+        }
+        
+        // Remove empty headers
+        for (int i = visibleItems.size() - 1; i >= 0; i--) {
+            if (visibleItems.get(i).getType() == TaskItem.TYPE_HEADER) {
+                boolean hasTasks = false;
+                for (int j = i + 1; j < visibleItems.size(); j++) {
+                    if (visibleItems.get(j).getType() == TaskItem.TYPE_HEADER) break;
+                    hasTasks = true;
+                }
+                if (!hasTasks) {
+                    visibleItems.remove(i);
+                }
+            }
+        }
     }
     
     @Override
     public int getItemViewType(int position) {
-        return items.get(position).getType();
+        return visibleItems.get(position).getType();
     }
     
     public static class HeaderViewHolder extends RecyclerView.ViewHolder {
@@ -55,21 +99,18 @@ public class TodoAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     public RecyclerView.ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
         LayoutInflater inflater = LayoutInflater.from(parent.getContext());
         if (viewType == TaskItem.TYPE_HEADER) {
-            View view = inflater.inflate(R.layout.item_header, parent, false);
-            return new HeaderViewHolder(view);
+            return new HeaderViewHolder(inflater.inflate(R.layout.item_header, parent, false));
         } else {
-            View view = inflater.inflate(R.layout.item_todo, parent, false);
-            return new TaskViewHolder(view);
+            return new TaskViewHolder(inflater.inflate(R.layout.item_todo, parent, false));
         }
     }
     
     @Override
     public void onBindViewHolder(RecyclerView.ViewHolder holder, int position) {
-        TaskItem item = items.get(position);
+        TaskItem item = visibleItems.get(position);
         
         if (holder instanceof HeaderViewHolder) {
-            HeaderViewHolder h = (HeaderViewHolder) holder;
-            h.headerText.setText(item.getTitle());
+            ((HeaderViewHolder) holder).headerText.setText(item.getTitle());
         } 
         else if (holder instanceof TaskViewHolder) {
             TaskViewHolder t = (TaskViewHolder) holder;
@@ -80,37 +121,27 @@ public class TodoAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
             t.checkbox.setChecked(item.isCompleted());
             t.checkbox.setOnCheckedChangeListener((buttonView, isChecked) -> {
                 item.setCompleted(isChecked);
-                if (isChecked) {
-                    t.taskText.setPaintFlags(
-                        t.taskText.getPaintFlags() | android.graphics.Paint.STRIKE_THRU_TEXT_FLAG);
-                    t.taskText.setTextColor(0xFF666666);
-                    t.taskTime.setTextColor(0xFF444444);
+                if (isChecked && hideCompleted) {
+                    rebuildVisibleList();
+                    notifyDataSetChanged();
                 } else {
-                    t.taskText.setPaintFlags(
-                        t.taskText.getPaintFlags() & ~android.graphics.Paint.STRIKE_THRU_TEXT_FLAG);
-                    t.taskText.setTextColor(0xFFE0E0E0);
-                    t.taskTime.setTextColor(0xFF666666);
+                    updateTaskAppearance(t, item);
                 }
             });
             
-            if (item.isCompleted()) {
-                t.taskText.setPaintFlags(
-                    t.taskText.getPaintFlags() | android.graphics.Paint.STRIKE_THRU_TEXT_FLAG);
-                t.taskText.setTextColor(0xFF666666);
-                t.taskTime.setTextColor(0xFF444444);
-            }
+            updateTaskAppearance(t, item);
             
             t.btnDelete.setOnClickListener(v -> {
                 int pos = t.getAdapterPosition();
                 if (pos != RecyclerView.NO_POSITION) {
+                    TaskItem toDelete = visibleItems.get(pos);
                     new AlertDialog.Builder(v.getContext())
                         .setTitle("Delete Task")
-                        .setMessage("Are you sure you want to delete \"" + 
-                                    items.get(pos).getTaskText() + "\"?")
+                        .setMessage("Delete \"" + toDelete.getTaskText() + "\"?")
                         .setPositiveButton("Delete", (dialog, which) -> {
-                            items.remove(pos);
-                            notifyItemRemoved(pos);
-                            updateHeaders();
+                            allItems.remove(toDelete);
+                            rebuildVisibleList();
+                            notifyDataSetChanged();
                         })
                         .setNegativeButton("Cancel", null)
                         .show();
@@ -119,80 +150,64 @@ public class TodoAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         }
     }
     
-    private String formatTime(long timestamp) {
-        long now = System.currentTimeMillis();
-        long diff = now - timestamp;
-        long hours = TimeUnit.MILLISECONDS.toHours(diff);
-        
-        if (hours < 24) {
-            return "Today at " + timeFormat.format(new Date(timestamp));
-        } else if (hours < 48) {
-            return "Yesterday at " + timeFormat.format(new Date(timestamp));
+    private void updateTaskAppearance(TaskViewHolder t, TaskItem item) {
+        if (item.isCompleted()) {
+            t.taskText.setPaintFlags(t.taskText.getPaintFlags() | android.graphics.Paint.STRIKE_THRU_TEXT_FLAG);
+            t.taskText.setTextColor(0xFF666666);
+            t.taskTime.setTextColor(0xFF444444);
         } else {
-            return dateFormat.format(new Date(timestamp));
+            t.taskText.setPaintFlags(t.taskText.getPaintFlags() & ~android.graphics.Paint.STRIKE_THRU_TEXT_FLAG);
+            t.taskText.setTextColor(0xFFE0E0E0);
+            t.taskTime.setTextColor(0xFF666666);
         }
+    }
+    
+    private String formatTime(long timestamp) {
+        long diff = System.currentTimeMillis() - timestamp;
+        long hours = TimeUnit.MILLISECONDS.toHours(diff);
+        if (hours < 24) return "Today at " + timeFormat.format(new Date(timestamp));
+        if (hours < 48) return "Yesterday at " + timeFormat.format(new Date(timestamp));
+        return dateFormat.format(new Date(timestamp));
     }
     
     @Override
     public int getItemCount() {
-        return items.size();
-    }
-    
-    public void updateHeaders() {
-        for (int i = items.size() - 1; i >= 0; i--) {
-            if (items.get(i).getType() == TaskItem.TYPE_HEADER) {
-                boolean hasTasks = false;
-                for (int j = i + 1; j < items.size(); j++) {
-                    if (items.get(j).getType() == TaskItem.TYPE_HEADER) break;
-                    hasTasks = true;
-                }
-                if (!hasTasks) {
-                    items.remove(i);
-                }
-            }
-        }
-        notifyDataSetChanged();
+        return visibleItems.size();
     }
     
     public void addTask(String text) {
         long now = System.currentTimeMillis();
         String category = getCategory(now);
-        
         int headerIndex = findHeaderIndex(category);
+        
         if (headerIndex == -1) {
-            items.add(new TaskItem(TaskItem.TYPE_HEADER, category));
-            headerIndex = items.size() - 1;
+            allItems.add(new TaskItem(TaskItem.TYPE_HEADER, category));
+            headerIndex = allItems.size() - 1;
         }
         
         TaskItem task = new TaskItem(TaskItem.TYPE_TASK, text, now);
         int insertAt = headerIndex + 1;
-        while (insertAt < items.size() && items.get(insertAt).getType() == TaskItem.TYPE_TASK) {
+        while (insertAt < allItems.size() && allItems.get(insertAt).getType() == TaskItem.TYPE_TASK) {
             insertAt++;
         }
-        items.add(insertAt, task);
-        notifyItemInserted(insertAt);
+        allItems.add(insertAt, task);
+        rebuildVisibleList();
+        notifyDataSetChanged();
     }
     
     private int findHeaderIndex(String category) {
-        for (int i = 0; i < items.size(); i++) {
-            if (items.get(i).getType() == TaskItem.TYPE_HEADER && 
-                items.get(i).getTitle().equals(category)) {
-                return i;
-            }
+        for (int i = 0; i < allItems.size(); i++) {
+            if (allItems.get(i).getType() == TaskItem.TYPE_HEADER && 
+                allItems.get(i).getTitle().equals(category)) return i;
         }
         return -1;
     }
     
     private String getCategory(long timestamp) {
-        long now = System.currentTimeMillis();
-        long diff = now - timestamp;
-        long days = TimeUnit.MILLISECONDS.toDays(diff);
-        
+        long days = TimeUnit.MILLISECONDS.toDays(System.currentTimeMillis() - timestamp);
         if (days == 0) return "Today";
         if (days <= 7) return "Previous 7 Days";
         if (days <= 30) return "Previous 30 Days";
-        
-        SimpleDateFormat sdf = new SimpleDateFormat("MMMM yyyy", Locale.getDefault());
-        return sdf.format(new Date(timestamp));
+        return new SimpleDateFormat("MMMM yyyy", Locale.getDefault()).format(new Date(timestamp));
     }
 }
