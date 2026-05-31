@@ -2,6 +2,8 @@ package com.tododroid;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -60,15 +62,27 @@ public class MainActivity extends AppCompatActivity {
         btnCreate.setOnClickListener(v -> showCreateSheet());
         searchInput.setHint("Search tasks and notes...");
         
+        // Real-time search filter
+        searchInput.addTextChangedListener(new TextWatcher() {
+            @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+            @Override public void onTextChanged(CharSequence s, int start, int before, int count) {}
+            @Override public void afterTextChanged(Editable s) {
+                filterContent(s.toString().trim());
+            }
+        });
+        
         navView.setNavigationItemSelectedListener(item -> {
-            int id = item.getItemId();
-            if (id == R.id.nav_tasks) viewPager.setCurrentItem(0);
-            if (id == R.id.nav_completed) Toast.makeText(this, "Coming soon", Toast.LENGTH_SHORT).show();
-            if (id == R.id.nav_settings) Toast.makeText(this, "Coming soon", Toast.LENGTH_SHORT).show();
-            if (id == R.id.nav_about) Toast.makeText(this, "TodoDroid - Built in Termux", Toast.LENGTH_SHORT).show();
             drawerLayout.closeDrawer(GravityCompat.START);
             return true;
         });
+    }
+    
+    private void filterContent(String query) {
+        TasksFragment tf = (TasksFragment) pagerAdapter.getFragment(0);
+        NotesFragment nf = (NotesFragment) pagerAdapter.getFragment(1);
+        
+        if (tf != null) tf.filter(query);
+        if (nf != null) nf.filter(query);
     }
     
     private void showCreateSheet() {
@@ -88,6 +102,7 @@ public class MainActivity extends AppCompatActivity {
         BottomSheetDialog dialog = new BottomSheetDialog(this);
         View view = LayoutInflater.from(this).inflate(R.layout.dialog_quick_task, null);
         dialog.setContentView(view);
+        
         EditText input = view.findViewById(R.id.quick_task_input);
         TextView btnAdd = view.findViewById(R.id.btn_add_task);
         
@@ -105,12 +120,10 @@ public class MainActivity extends AppCompatActivity {
     }
     
     private void refreshCurrentFragment() {
-        if (pagerAdapter != null) {
-            TasksFragment tf = (TasksFragment) pagerAdapter.getFragment(0);
-            NotesFragment nf = (NotesFragment) pagerAdapter.getFragment(1);
-            if (tf != null) tf.refreshData();
-            if (nf != null) nf.refreshData();
-        }
+        TasksFragment tf = (TasksFragment) pagerAdapter.getFragment(0);
+        NotesFragment nf = (NotesFragment) pagerAdapter.getFragment(1);
+        if (tf != null) tf.refreshData();
+        if (nf != null) nf.refreshData();
     }
     
     private void seedDemoData() {
@@ -122,6 +135,8 @@ public class MainActivity extends AppCompatActivity {
         data.addItem(new TodoItem("Task", "Design dark theme UI", "", now - 86400000L * 3));
         TodoItem n1 = new TodoItem("Note", "App Ideas", "Rich text editor", now - 86400000L * 2);
         n1.setThemeColor(0xFF1F2937); data.addItem(n1);
+        TodoItem n2 = new TodoItem("Note", "Meeting Notes", "Module architecture", now - 86400000L * 5);
+        n2.setThemeColor(0xFFEDE9FE); data.addItem(n2);
     }
     
     @Override protected void onResume() { super.onResume(); refreshCurrentFragment(); }
@@ -137,71 +152,14 @@ public class MainActivity extends AppCompatActivity {
         
         LinearLayout rowLatest = pv.findViewById(R.id.sort_latest);
         LinearLayout rowOldest = pv.findViewById(R.id.sort_oldest);
-        TextView checkLatest = pv.findViewById(R.id.check_latest);
-        TextView checkOldest = pv.findViewById(R.id.check_oldest);
-        TextView viewList = pv.findViewById(R.id.view_list);
-        TextView viewCard = pv.findViewById(R.id.view_card);
         TextView txtLatest = (TextView) rowLatest.getChildAt(0);
         TextView txtOldest = (TextView) rowOldest.getChildAt(0);
         
-        // Set initial state
-        if (mSortLatest) {
-            txtLatest.setTextColor(0xFFFFFFFF); checkLatest.setVisibility(View.VISIBLE);
-            txtOldest.setTextColor(0xFFB0B0B0); checkOldest.setVisibility(View.INVISIBLE);
-        } else {
-            txtOldest.setTextColor(0xFFFFFFFF); checkOldest.setVisibility(View.VISIBLE);
-            txtLatest.setTextColor(0xFFB0B0B0); checkLatest.setVisibility(View.INVISIBLE);
-        }
-        
-        if (mCardViewMode) {
-            viewCard.setBackgroundResource(R.drawable.segment_selected); viewCard.setTextColor(0xFFFFFFFF);
-            viewList.setBackgroundResource(R.drawable.segment_unselected); viewList.setTextColor(0xFF888888);
-        } else {
-            viewList.setBackgroundResource(R.drawable.segment_selected); viewList.setTextColor(0xFFFFFFFF);
-            viewCard.setBackgroundResource(R.drawable.segment_unselected); viewCard.setTextColor(0xFF888888);
-        }
-        
-        rowLatest.setOnClickListener(v -> {
-            mSortLatest = true;
-            txtLatest.setTextColor(0xFFFFFFFF); checkLatest.setVisibility(View.VISIBLE);
-            txtOldest.setTextColor(0xFFB0B0B0); checkOldest.setVisibility(View.INVISIBLE);
-            applySort();
-            popup.dismiss();
-        });
-        
-        rowOldest.setOnClickListener(v -> {
-            mSortLatest = false;
-            txtOldest.setTextColor(0xFFFFFFFF); checkOldest.setVisibility(View.VISIBLE);
-            txtLatest.setTextColor(0xFFB0B0B0); checkLatest.setVisibility(View.INVISIBLE);
-            applySort();
-            popup.dismiss();
-        });
-        
-        viewList.setOnClickListener(v -> {
-            mCardViewMode = false;
-            viewList.setBackgroundResource(R.drawable.segment_selected); viewList.setTextColor(0xFFFFFFFF);
-            viewCard.setBackgroundResource(R.drawable.segment_unselected); viewCard.setTextColor(0xFF888888);
-            applyView();
-        });
-        
-        viewCard.setOnClickListener(v -> {
-            mCardViewMode = true;
-            viewCard.setBackgroundResource(R.drawable.segment_selected); viewCard.setTextColor(0xFFFFFFFF);
-            viewList.setBackgroundResource(R.drawable.segment_unselected); viewList.setTextColor(0xFF888888);
-            applyView();
-        });
+        rowLatest.setOnClickListener(v -> { mSortLatest = true; applySort(); popup.dismiss(); });
+        rowOldest.setOnClickListener(v -> { mSortLatest = false; applySort(); popup.dismiss(); });
     }
     
-    private void applySort() {
-        TasksFragment tf = (TasksFragment) pagerAdapter.getFragment(0);
-        if (tf != null) tf.setSort(mSortLatest);
-    }
-    
-    private void applyView() {
-        TasksFragment tf = (TasksFragment) pagerAdapter.getFragment(0);
-        if (tf != null) tf.setCardView(mCardViewMode);
-    }
-    
+    private void applySort() { TasksFragment tf = (TasksFragment) pagerAdapter.getFragment(0); if (tf != null) tf.setSort(mSortLatest); }
     private void setupViewPager() { pagerAdapter = new ViewPagerAdapter(this); viewPager.setAdapter(pagerAdapter); viewPager.setCurrentItem(0); }
     
     private void selectTab(boolean t) {

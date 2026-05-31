@@ -21,6 +21,7 @@ public class TasksFragment extends Fragment {
     private TextView toggleText;
     private View toggleDot;
     private ArrayList<TaskItem> taskItems;
+    private String currentFilter = "";
     
     @Nullable
     @Override
@@ -34,11 +35,8 @@ public class TasksFragment extends Fragment {
         toggleDot = view.findViewById(R.id.toggle_dot);
         
         recyclerTasks.setLayoutManager(new LinearLayoutManager(getContext()));
-        
-        // Create the list ONCE and keep it
         taskItems = new ArrayList<>();
         loadTasksFromGlobal();
-        
         adapter = new TodoAdapter(taskItems);
         recyclerTasks.setAdapter(adapter);
         
@@ -58,22 +56,21 @@ public class TasksFragment extends Fragment {
     private void loadTasksFromGlobal() {
         taskItems.clear();
         for (TodoItem item : GlobalData.getInstance().getTasks()) {
-            taskItems.add(new TaskItem(TaskItem.TYPE_TASK, item.getTitle(), item.getTimestamp()));
+            if (currentFilter.isEmpty() || 
+                item.getTitle().toLowerCase().contains(currentFilter.toLowerCase())) {
+                TaskItem ti = new TaskItem(TaskItem.TYPE_TASK, item.getTitle(), item.getTimestamp());
+                taskItems.add(ti);
+            }
         }
     }
     
-    public void refreshData() {
+    public void filter(String query) {
+        currentFilter = query;
         loadTasksFromGlobal();
-        if (adapter != null) {
-            adapter.refreshFromSource();
-        }
+        if (adapter != null) adapter.refreshFromSource();
     }
     
-    public void setSort(boolean latest) {
-        if (adapter != null) adapter.setSortByLatest(latest);
-    }
-    
-    public void setCardView(boolean card) {
-        if (adapter != null) adapter.setCardView(card);
-    }
+    public void refreshData() { loadTasksFromGlobal(); if (adapter != null) adapter.refreshFromSource(); }
+    public void setSort(boolean latest) { if (adapter != null) adapter.setSortByLatest(latest); }
+    public void setCardView(boolean card) { if (adapter != null) adapter.setCardView(card); }
 }
