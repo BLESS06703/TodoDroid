@@ -17,13 +17,11 @@ import java.util.concurrent.TimeUnit;
 
 public class TodoAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     
-    private ArrayList<TaskItem> sourceList;
-    private ArrayList<TaskItem> visibleItems;
-    private boolean hideCompleted = false;
-    private boolean sortByLatest = true;
-    private boolean cardView = true;
-    private SimpleDateFormat timeFormat = new SimpleDateFormat("hh:mm a", Locale.getDefault());
-    private SimpleDateFormat dateFormat = new SimpleDateFormat("MMM d, hh:mm a", Locale.getDefault());
+    private ArrayList<TaskItem> sourceList, visibleItems;
+    private boolean hideCompleted = false, sortByLatest = true, cardView = true;
+    private SimpleDateFormat timeFmt = new SimpleDateFormat("hh:mm a", Locale.getDefault());
+    private SimpleDateFormat dateFmt = new SimpleDateFormat("MMM d, hh:mm a", Locale.getDefault());
+    private SimpleDateFormat dueFmt = new SimpleDateFormat("Due: MMM d, hh:mm a", Locale.getDefault());
     
     public TodoAdapter(ArrayList<TaskItem> items) {
         this.sourceList = items;
@@ -31,170 +29,113 @@ public class TodoAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         rebuildVisibleList();
     }
     
-    public void setHideCompleted(boolean hide) {
-        this.hideCompleted = hide;
-        rebuildVisibleList();
-        notifyDataSetChanged();
-    }
-    
+    public void setHideCompleted(boolean h) { hideCompleted = h; rebuildVisibleList(); notifyDataSetChanged(); }
     public boolean isHideCompleted() { return hideCompleted; }
-    
-    public void setSortByLatest(boolean latest) {
-        this.sortByLatest = latest;
-        rebuildVisibleList();
-        notifyDataSetChanged();
-    }
-    
-    public boolean isSortByLatest() { return sortByLatest; }
-    
-    public void setCardView(boolean card) {
-        this.cardView = card;
-        notifyDataSetChanged();
-    }
-    
-    public boolean isCardView() { return cardView; }
-    
-    public void refreshFromSource() {
-        rebuildVisibleList();
-        notifyDataSetChanged();
-    }
+    public void setSortByLatest(boolean l) { sortByLatest = l; rebuildVisibleList(); notifyDataSetChanged(); }
+    public void setCardView(boolean c) { cardView = c; notifyDataSetChanged(); }
+    public void refreshFromSource() { rebuildVisibleList(); notifyDataSetChanged(); }
     
     private void rebuildVisibleList() {
         visibleItems.clear();
-        
-        ArrayList<TaskItem> tasksOnly = new ArrayList<>();
+        ArrayList<TaskItem> tasks = new ArrayList<>();
         for (TaskItem item : sourceList) {
-            if (item.getType() == TaskItem.TYPE_TASK) {
-                if (hideCompleted && item.isCompleted()) continue;
-                tasksOnly.add(item);
-            }
+            if (item.getType() == TaskItem.TYPE_TASK && !(hideCompleted && item.isCompleted())) tasks.add(item);
         }
+        Collections.sort(tasks, (a, b) -> sortByLatest ? Long.compare(b.getTimestamp(), a.getTimestamp()) : Long.compare(a.getTimestamp(), b.getTimestamp()));
+        String lastH = null;
+        for (TaskItem t : tasks) {
+            String cat = getCategory(t.getTimestamp());
+            if (!cat.equals(lastH)) { visibleItems.add(new TaskItem(TaskItem.TYPE_HEADER, cat)); lastH = cat; }
+            visibleItems.add(t);
+        }
+    }
+    
+    @Override public int getItemViewType(int p) { return visibleItems.get(p).getType(); }
+    
+    static class HeaderViewHolder extends RecyclerView.ViewHolder {
+        TextView headerText;
+        HeaderViewHolder(View v) { super(v); headerText = v.findViewById(R.id.header_text); }
+    }
+    static class TaskViewHolder extends RecyclerView.ViewHolder {
+        TextView taskText, taskTime, taskDue;
+        CheckBox checkbox;
+        ImageButton btnDelete;
+        TaskViewHolder(View v) {
+            super(v);
+            taskText = v.findViewById(R.id.task_text);
+            taskTime = v.findViewById(R.id.task_time);
+            taskDue = v.findViewById(R.id.task_due);
+            checkbox = v.findViewById(R.id.checkbox);
+            btnDelete = v.findViewById(R.id.btn_delete);
+        }
+    }
+    
+    @Override
+    public RecyclerView.ViewHolder onCreateViewHolder(ViewGroup p, int vt) {
+        LayoutInflater inf = LayoutInflater.from(p.getContext());
+        if (vt == TaskItem.TYPE_HEADER) return new HeaderViewHolder(inf.inflate(R.layout.item_header, p, false));
+        return new TaskViewHolder(inf.inflate(cardView ? R.layout.item_todo : R.layout.item_todo_compact, p, false));
+    }
+    
+    @Override
+    public void onBindViewHolder(RecyclerView.ViewHolder h, int pos) {
+        TaskItem item = visibleItems.get(pos);
+        if (h instanceof HeaderViewHolder) { ((HeaderViewHolder)h).headerText.setText(item.getTitle()); return; }
+        TaskViewHolder t = (TaskViewHolder) h;
+        t.taskText.setText(item.getTaskText());
+        t.taskTime.setText(formatTime(item.getTimestamp()));
         
-        Collections.sort(tasksOnly, (a, b) -> {
-            if (sortByLatest) return Long.compare(b.getTimestamp(), a.getTimestamp());
-            else return Long.compare(a.getTimestamp(), b.getTimestamp());
+        if (item.hasDueDate()) {
+            t.taskDue.setVisibility(View.VISIBLE);
+            long now = System.currentTimeMillis();
+            if (item.getDueDate() < now && !item.isCompleted()) {
+                t.taskDue.setText("Overdue! " + dueFmt.format(new Date(item.getDueDate())));
+                t.taskDue.setTextColor(0xFFEF4444);
+            } else {
+                t.taskDue.setText(dueFmt.format(new Date(item.getDueDate())));
+                t.taskDue.setTextColor(0xFFF59E0B);
+            }
+        } else { t.taskDue.setVisibility(View.GONE); }
+        
+        t.checkbox.setOnCheckedChangeListener(null);
+        t.checkbox.setChecked(item.isCompleted());
+        t.checkbox.setOnCheckedChangeListener((b, ch) -> {
+            item.setCompleted(ch);
+            if (ch && hideCompleted) { rebuildVisibleList(); notifyDataSetChanged(); }
+            else updateAppearance(t, item);
         });
-        
-        String lastHeader = null;
-        for (TaskItem task : tasksOnly) {
-            String category = getCategory(task.getTimestamp());
-            if (!category.equals(lastHeader)) {
-                visibleItems.add(new TaskItem(TaskItem.TYPE_HEADER, category));
-                lastHeader = category;
+        updateAppearance(t, item);
+        t.btnDelete.setOnClickListener(v -> {
+            int p = t.getAdapterPosition();
+            if (p != RecyclerView.NO_POSITION) {
+                TaskItem del = visibleItems.get(p);
+                new AlertDialog.Builder(v.getContext()).setTitle("Delete Task")
+                    .setMessage("Delete \"" + del.getTaskText() + "\"?")
+                    .setPositiveButton("Delete", (d, w) -> { sourceList.remove(del); rebuildVisibleList(); notifyDataSetChanged(); })
+                    .setNegativeButton("Cancel", null).show();
             }
-            visibleItems.add(task);
-        }
-    }
-    
-    @Override
-    public int getItemViewType(int position) {
-        return visibleItems.get(position).getType();
-    }
-    
-    public static class HeaderViewHolder extends RecyclerView.ViewHolder {
-        public TextView headerText;
-        public HeaderViewHolder(View itemView) {
-            super(itemView);
-            headerText = itemView.findViewById(R.id.header_text);
-        }
-    }
-    
-    public static class TaskViewHolder extends RecyclerView.ViewHolder {
-        public TextView taskText, taskTime;
-        public CheckBox checkbox;
-        public ImageButton btnDelete;
-        public TaskViewHolder(View itemView) {
-            super(itemView);
-            taskText = itemView.findViewById(R.id.task_text);
-            taskTime = itemView.findViewById(R.id.task_time);
-            checkbox = itemView.findViewById(R.id.checkbox);
-            btnDelete = itemView.findViewById(R.id.btn_delete);
-        }
-    }
-    
-    @Override
-    public RecyclerView.ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
-        LayoutInflater inflater = LayoutInflater.from(parent.getContext());
-        if (viewType == TaskItem.TYPE_HEADER) {
-            return new HeaderViewHolder(inflater.inflate(R.layout.item_header, parent, false));
-        } else {
-            return new TaskViewHolder(inflater.inflate(
-                cardView ? R.layout.item_todo : R.layout.item_todo_compact, parent, false));
-        }
-    }
-    
-    @Override
-    public void onBindViewHolder(RecyclerView.ViewHolder holder, int position) {
-        TaskItem item = visibleItems.get(position);
-        
-        if (holder instanceof HeaderViewHolder) {
-            ((HeaderViewHolder) holder).headerText.setText(item.getTitle());
-        } else if (holder instanceof TaskViewHolder) {
-            TaskViewHolder t = (TaskViewHolder) holder;
-            t.taskText.setText(item.getTaskText());
-            t.taskTime.setText(formatTime(item.getTimestamp()));
-            
-            t.checkbox.setOnCheckedChangeListener(null);
-            t.checkbox.setChecked(item.isCompleted());
-            t.checkbox.setOnCheckedChangeListener((buttonView, isChecked) -> {
-                item.setCompleted(isChecked);
-                if (isChecked && hideCompleted) {
-                    rebuildVisibleList();
-                    notifyDataSetChanged();
-                } else {
-                    updateAppearance(t, item);
-                }
-            });
-            
-            updateAppearance(t, item);
-            
-            t.btnDelete.setOnClickListener(v -> {
-                int pos = t.getAdapterPosition();
-                if (pos != RecyclerView.NO_POSITION) {
-                    TaskItem toDelete = visibleItems.get(pos);
-                    new AlertDialog.Builder(v.getContext())
-                        .setTitle("Delete Task")
-                        .setMessage("Delete \"" + toDelete.getTaskText() + "\"?")
-                        .setPositiveButton("Delete", (d, w) -> {
-                            sourceList.remove(toDelete);
-                            rebuildVisibleList();
-                            notifyDataSetChanged();
-                        })
-                        .setNegativeButton("Cancel", null)
-                        .show();
-                }
-            });
-        }
+        });
     }
     
     private void updateAppearance(TaskViewHolder t, TaskItem item) {
         if (item.isCompleted()) {
             t.taskText.setPaintFlags(t.taskText.getPaintFlags() | android.graphics.Paint.STRIKE_THRU_TEXT_FLAG);
-            t.taskText.setTextColor(0xFF666666);
-            t.taskTime.setTextColor(0xFF444444);
+            t.taskText.setTextColor(0xFF666666); t.taskTime.setTextColor(0xFF444444);
         } else {
             t.taskText.setPaintFlags(t.taskText.getPaintFlags() & ~android.graphics.Paint.STRIKE_THRU_TEXT_FLAG);
-            t.taskText.setTextColor(0xFFE0E0E0);
-            t.taskTime.setTextColor(0xFF666666);
+            t.taskText.setTextColor(0xFFE0E0E0); t.taskTime.setTextColor(0xFF666666);
         }
     }
     
     private String formatTime(long ts) {
         long diff = System.currentTimeMillis() - ts;
         long hrs = TimeUnit.MILLISECONDS.toHours(diff);
-        if (hrs < 24) return "Today at " + timeFormat.format(new Date(ts));
-        if (hrs < 48) return "Yesterday at " + timeFormat.format(new Date(ts));
-        return dateFormat.format(new Date(ts));
+        if (hrs < 24) return "Today at " + timeFmt.format(new Date(ts));
+        if (hrs < 48) return "Yesterday at " + timeFmt.format(new Date(ts));
+        return dateFmt.format(new Date(ts));
     }
     
-    @Override
-    public int getItemCount() { return visibleItems.size(); }
-    
-    public void addTask(TaskItem task) {
-        sourceList.add(task);
-        rebuildVisibleList();
-        notifyDataSetChanged();
-    }
+    @Override public int getItemCount() { return visibleItems.size(); }
     
     private String getCategory(long ts) {
         long days = TimeUnit.MILLISECONDS.toDays(System.currentTimeMillis() - ts);

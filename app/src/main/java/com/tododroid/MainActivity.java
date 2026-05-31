@@ -1,5 +1,7 @@
 package com.tododroid;
 
+import android.app.DatePickerDialog;
+import android.app.TimePickerDialog;
 import android.content.Intent;
 import android.os.Bundle;
 import android.text.Editable;
@@ -19,6 +21,9 @@ import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.viewpager2.widget.ViewPager2;
 import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.google.android.material.navigation.NavigationView;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
+import java.util.Locale;
 
 public class MainActivity extends AppCompatActivity {
     
@@ -29,14 +34,12 @@ public class MainActivity extends AppCompatActivity {
     private TextView tabTasks, tabNotes;
     private ViewPager2 viewPager;
     private ViewPagerAdapter pagerAdapter;
-    private boolean mSortLatest = true;
-    private boolean mCardViewMode = true;
+    private boolean mSortLatest = true, mCardViewMode = true;
     
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        
         drawerLayout = findViewById(R.id.drawer_layout);
         navView = findViewById(R.id.nav_view);
         btnMenu = findViewById(R.id.btn_menu);
@@ -46,77 +49,86 @@ public class MainActivity extends AppCompatActivity {
         tabTasks = findViewById(R.id.tab_tasks);
         tabNotes = findViewById(R.id.tab_notes);
         viewPager = findViewById(R.id.view_pager);
-        
         setupViewPager();
         seedDemoData();
-        
         btnMenu.setOnClickListener(v -> drawerLayout.openDrawer(GravityCompat.START));
         tabTasks.setOnClickListener(v -> { viewPager.setCurrentItem(0); selectTab(true); });
         tabNotes.setOnClickListener(v -> { viewPager.setCurrentItem(1); selectTab(false); });
-        
         viewPager.registerOnPageChangeCallback(new ViewPager2.OnPageChangeCallback() {
             @Override public void onPageSelected(int p) { selectTab(p == 0); }
         });
-        
         btnSort.setOnClickListener(v -> showSortPopup(v));
         btnCreate.setOnClickListener(v -> showCreateSheet());
         searchInput.setHint("Search tasks and notes...");
-        
-        // Real-time search filter
         searchInput.addTextChangedListener(new TextWatcher() {
-            @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
-            @Override public void onTextChanged(CharSequence s, int start, int before, int count) {}
-            @Override public void afterTextChanged(Editable s) {
-                filterContent(s.toString().trim());
-            }
+            @Override public void beforeTextChanged(CharSequence s, int a, int b, int c) {}
+            @Override public void onTextChanged(CharSequence s, int a, int b, int c) {}
+            @Override public void afterTextChanged(Editable s) { filterContent(s.toString().trim()); }
         });
-        
-        navView.setNavigationItemSelectedListener(item -> {
-            drawerLayout.closeDrawer(GravityCompat.START);
-            return true;
-        });
+        navView.setNavigationItemSelectedListener(item -> { drawerLayout.closeDrawer(GravityCompat.START); return true; });
     }
     
-    private void filterContent(String query) {
+    private void filterContent(String q) {
         TasksFragment tf = (TasksFragment) pagerAdapter.getFragment(0);
         NotesFragment nf = (NotesFragment) pagerAdapter.getFragment(1);
-        
-        if (tf != null) tf.filter(query);
-        if (nf != null) nf.filter(query);
+        if (tf != null) tf.filter(q);
+        if (nf != null) nf.filter(q);
     }
     
     private void showCreateSheet() {
-        BottomSheetDialog sheet = new BottomSheetDialog(this);
-        View view = LayoutInflater.from(this).inflate(R.layout.bottom_sheet_create, null);
-        sheet.setContentView(view);
-        view.findViewById(R.id.create_note).setOnClickListener(v -> {
-            sheet.dismiss(); startActivity(new Intent(this, NoteEditorActivity.class));
-        });
-        view.findViewById(R.id.create_task).setOnClickListener(v -> {
-            sheet.dismiss(); showQuickTaskDialog();
-        });
-        sheet.show();
+        BottomSheetDialog s = new BottomSheetDialog(this);
+        View v = LayoutInflater.from(this).inflate(R.layout.bottom_sheet_create, null);
+        s.setContentView(v);
+        v.findViewById(R.id.create_note).setOnClickListener(x -> { s.dismiss(); startActivity(new Intent(this, NoteEditorActivity.class)); });
+        v.findViewById(R.id.create_task).setOnClickListener(x -> { s.dismiss(); showQuickTaskDialog(); });
+        s.show();
     }
     
     private void showQuickTaskDialog() {
-        BottomSheetDialog dialog = new BottomSheetDialog(this);
-        View view = LayoutInflater.from(this).inflate(R.layout.dialog_quick_task, null);
-        dialog.setContentView(view);
+        BottomSheetDialog d = new BottomSheetDialog(this);
+        View v = LayoutInflater.from(this).inflate(R.layout.dialog_quick_task, null);
+        d.setContentView(v);
+        EditText input = v.findViewById(R.id.quick_task_input);
+        TextView btnAdd = v.findViewById(R.id.btn_add_task);
+        TextView dueDateText = v.findViewById(R.id.due_date_text);
+        TextView btnClear = v.findViewById(R.id.btn_clear_date);
+        final long[] due = {0};
+        final SimpleDateFormat fmt = new SimpleDateFormat("MMM d, yyyy 'at' hh:mm a", Locale.getDefault());
         
-        EditText input = view.findViewById(R.id.quick_task_input);
-        TextView btnAdd = view.findViewById(R.id.btn_add_task);
+        dueDateText.setOnClickListener(x -> {
+            Calendar cal = Calendar.getInstance();
+            if (due[0] > 0) cal.setTimeInMillis(due[0]);
+            new DatePickerDialog(this, (dp, y, m, day) -> {
+                cal.set(y, m, day);
+                new TimePickerDialog(this, (tp, h, min) -> {
+                    cal.set(Calendar.HOUR_OF_DAY, h);
+                    cal.set(Calendar.MINUTE, min);
+                    due[0] = cal.getTimeInMillis();
+                    dueDateText.setText(fmt.format(cal.getTime()));
+                    dueDateText.setTextColor(0xFF7C3AED);
+                    btnClear.setVisibility(View.VISIBLE);
+                }, cal.get(Calendar.HOUR_OF_DAY), cal.get(Calendar.MINUTE), false).show();
+            }, cal.get(Calendar.YEAR), cal.get(Calendar.MONTH), cal.get(Calendar.DAY_OF_MONTH)).show();
+        });
         
-        btnAdd.setOnClickListener(v -> {
-            String text = input.getText().toString().trim();
-            if (text.isEmpty()) { Toast.makeText(this, "Enter a task", Toast.LENGTH_SHORT).show(); return; }
-            GlobalData.getInstance().addItem(new TodoItem("Task", text, "", System.currentTimeMillis()));
+        btnClear.setOnClickListener(x -> {
+            due[0] = 0; dueDateText.setText("Set due date (optional)");
+            dueDateText.setTextColor(0xFF666666); btnClear.setVisibility(View.GONE);
+        });
+        
+        btnAdd.setOnClickListener(x -> {
+            String t = input.getText().toString().trim();
+            if (t.isEmpty()) { Toast.makeText(this, "Enter a task", Toast.LENGTH_SHORT).show(); return; }
+            TodoItem task = new TodoItem("Task", t, "", System.currentTimeMillis());
+            if (due[0] > 0) task.setDueDate(due[0]);
+            GlobalData.getInstance().addItem(task);
             refreshCurrentFragment();
-            dialog.dismiss();
+            d.dismiss();
             viewPager.setCurrentItem(0);
             selectTab(true);
             Toast.makeText(this, "Task added", Toast.LENGTH_SHORT).show();
         });
-        dialog.show();
+        d.show();
     }
     
     private void refreshCurrentFragment() {
@@ -127,36 +139,28 @@ public class MainActivity extends AppCompatActivity {
     }
     
     private void seedDemoData() {
-        GlobalData data = GlobalData.getInstance();
-        if (!data.getItems().isEmpty()) return;
-        long now = System.currentTimeMillis();
-        data.addItem(new TodoItem("Task", "Build TodoDroid app", "", now));
-        data.addItem(new TodoItem("Task", "Push code to GitHub", "", now - 3600000));
-        data.addItem(new TodoItem("Task", "Design dark theme UI", "", now - 86400000L * 3));
-        TodoItem n1 = new TodoItem("Note", "App Ideas", "Rich text editor", now - 86400000L * 2);
-        n1.setThemeColor(0xFF1F2937); data.addItem(n1);
-        TodoItem n2 = new TodoItem("Note", "Meeting Notes", "Module architecture", now - 86400000L * 5);
-        n2.setThemeColor(0xFFEDE9FE); data.addItem(n2);
+        GlobalData d = GlobalData.getInstance();
+        if (!d.getItems().isEmpty()) return;
+        long n = System.currentTimeMillis();
+        d.addItem(new TodoItem("Task", "Build TodoDroid app", "", n));
+        d.addItem(new TodoItem("Task", "Push code to GitHub", "", n - 3600000));
+        TodoItem n1 = new TodoItem("Note", "App Ideas", "Rich text editor", n - 86400000L * 2);
+        n1.setThemeColor(0xFF1F2937); d.addItem(n1);
     }
     
     @Override protected void onResume() { super.onResume(); refreshCurrentFragment(); }
     
     private void showSortPopup(View anchor) {
         View pv = LayoutInflater.from(this).inflate(R.layout.popup_sort_menu, null);
-        int w = (int) (300 * getResources().getDisplayMetrics().density);
-        PopupWindow popup = new PopupWindow(pv, w, LinearLayout.LayoutParams.WRAP_CONTENT, true);
-        popup.setBackgroundDrawable(new android.graphics.drawable.ColorDrawable(android.graphics.Color.TRANSPARENT));
-        popup.setElevation(24f);
+        int w = (int)(300 * getResources().getDisplayMetrics().density);
+        PopupWindow pop = new PopupWindow(pv, w, LinearLayout.LayoutParams.WRAP_CONTENT, true);
+        pop.setBackgroundDrawable(new android.graphics.drawable.ColorDrawable(android.graphics.Color.TRANSPARENT));
+        pop.setElevation(24f);
         int[] l = new int[2]; anchor.getLocationOnScreen(l);
-        popup.showAtLocation(anchor, Gravity.NO_GRAVITY, l[0] - w + anchor.getWidth(), l[1] + anchor.getHeight() + 12);
-        
-        LinearLayout rowLatest = pv.findViewById(R.id.sort_latest);
-        LinearLayout rowOldest = pv.findViewById(R.id.sort_oldest);
-        TextView txtLatest = (TextView) rowLatest.getChildAt(0);
-        TextView txtOldest = (TextView) rowOldest.getChildAt(0);
-        
-        rowLatest.setOnClickListener(v -> { mSortLatest = true; applySort(); popup.dismiss(); });
-        rowOldest.setOnClickListener(v -> { mSortLatest = false; applySort(); popup.dismiss(); });
+        pop.showAtLocation(anchor, Gravity.NO_GRAVITY, l[0] - w + anchor.getWidth(), l[1] + anchor.getHeight() + 12);
+        LinearLayout rl = pv.findViewById(R.id.sort_latest), ro = pv.findViewById(R.id.sort_oldest);
+        ((TextView)rl.getChildAt(0)).setOnClickListener(v -> { mSortLatest = true; applySort(); pop.dismiss(); });
+        ((TextView)ro.getChildAt(0)).setOnClickListener(v -> { mSortLatest = false; applySort(); pop.dismiss(); });
     }
     
     private void applySort() { TasksFragment tf = (TasksFragment) pagerAdapter.getFragment(0); if (tf != null) tf.setSort(mSortLatest); }

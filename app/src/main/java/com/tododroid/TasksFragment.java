@@ -28,49 +28,39 @@ public class TasksFragment extends Fragment {
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container,
                              @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_tasks, container, false);
-        
         recyclerTasks = view.findViewById(R.id.recycler_tasks);
         toggleCompleted = view.findViewById(R.id.toggle_completed);
         toggleText = view.findViewById(R.id.toggle_text);
         toggleDot = view.findViewById(R.id.toggle_dot);
-        
         recyclerTasks.setLayoutManager(new LinearLayoutManager(getContext()));
         taskItems = new ArrayList<>();
         loadTasksFromGlobal();
         adapter = new TodoAdapter(taskItems);
         recyclerTasks.setAdapter(adapter);
-        
         toggleText.setText("Hide done");
         toggleDot.setBackgroundResource(R.drawable.toggle_dot_off);
-        
         toggleCompleted.setOnClickListener(v -> {
-            boolean newState = !adapter.isHideCompleted();
-            adapter.setHideCompleted(newState);
-            toggleText.setText(newState ? "Show done" : "Hide done");
-            toggleDot.setBackgroundResource(newState ? R.drawable.toggle_dot_on : R.drawable.toggle_dot_off);
+            boolean ns = !adapter.isHideCompleted();
+            adapter.setHideCompleted(ns);
+            toggleText.setText(ns ? "Show done" : "Hide done");
+            toggleDot.setBackgroundResource(ns ? R.drawable.toggle_dot_on : R.drawable.toggle_dot_off);
         });
-        
         return view;
     }
     
     private void loadTasksFromGlobal() {
         taskItems.clear();
         for (TodoItem item : GlobalData.getInstance().getTasks()) {
-            if (currentFilter.isEmpty() || 
-                item.getTitle().toLowerCase().contains(currentFilter.toLowerCase())) {
+            if (currentFilter.isEmpty() || item.getTitle().toLowerCase().contains(currentFilter.toLowerCase())) {
                 TaskItem ti = new TaskItem(TaskItem.TYPE_TASK, item.getTitle(), item.getTimestamp());
+                if (item.hasDueDate()) ti.setDueDate(item.getDueDate());
                 taskItems.add(ti);
             }
         }
     }
     
-    public void filter(String query) {
-        currentFilter = query;
-        loadTasksFromGlobal();
-        if (adapter != null) adapter.refreshFromSource();
-    }
-    
+    public void filter(String q) { currentFilter = q; loadTasksFromGlobal(); if (adapter != null) adapter.refreshFromSource(); }
     public void refreshData() { loadTasksFromGlobal(); if (adapter != null) adapter.refreshFromSource(); }
-    public void setSort(boolean latest) { if (adapter != null) adapter.setSortByLatest(latest); }
-    public void setCardView(boolean card) { if (adapter != null) adapter.setCardView(card); }
+    public void setSort(boolean l) { if (adapter != null) adapter.setSortByLatest(l); }
+    public void setCardView(boolean c) { if (adapter != null) adapter.setCardView(c); }
 }
