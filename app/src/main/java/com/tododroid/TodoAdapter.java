@@ -112,6 +112,7 @@ public class TodoAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
                 new AlertDialog.Builder(v.getContext()).setTitle("Delete Task")
                     .setMessage("Delete \"" + del.getTaskText() + "\"?")
                     .setPositiveButton("Delete", (d, w) -> { sourceList.remove(del); rebuildVisibleList(); notifyDataSetChanged(); })
+                        GlobalData.getInstance().saveToFile(v.getContext());
                     .setNegativeButton("Cancel", null).show();
             }
         });

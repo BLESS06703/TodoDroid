@@ -187,6 +187,7 @@ public class NoteEditorActivity extends AppCompatActivity {
         TodoItem note = new TodoItem("Note", title, html, getIntent().getLongExtra("note_timestamp", System.currentTimeMillis()));
         note.setThemeColor(currentColor);
         GlobalData.getInstance().addItem(note);
+        GlobalData.getInstance().saveToFile(NoteEditorActivity.this);
         Toast.makeText(this, "Note saved!", Toast.LENGTH_SHORT).show();
         finish();
     }
