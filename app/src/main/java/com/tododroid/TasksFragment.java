@@ -17,7 +17,7 @@ public class TasksFragment extends Fragment {
     
     private TodoAdapter adapter;
     private RecyclerView recyclerTasks;
-    private LinearLayout toggleCompleted;
+    private LinearLayout toggleCompleted, emptyTasks;
     private TextView toggleText;
     private View toggleDot;
     private ArrayList<TaskItem> taskItems;
@@ -29,6 +29,7 @@ public class TasksFragment extends Fragment {
                              @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_tasks, container, false);
         recyclerTasks = view.findViewById(R.id.recycler_tasks);
+        emptyTasks = view.findViewById(R.id.empty_tasks);
         toggleCompleted = view.findViewById(R.id.toggle_completed);
         toggleText = view.findViewById(R.id.toggle_text);
         toggleDot = view.findViewById(R.id.toggle_dot);
@@ -45,6 +46,7 @@ public class TasksFragment extends Fragment {
             toggleText.setText(ns ? "Show done" : "Hide done");
             toggleDot.setBackgroundResource(ns ? R.drawable.toggle_dot_on : R.drawable.toggle_dot_off);
         });
+        updateEmptyState();
         return view;
     }
     
@@ -52,15 +54,23 @@ public class TasksFragment extends Fragment {
         taskItems.clear();
         for (TodoItem item : GlobalData.getInstance().getTasks()) {
             if (currentFilter.isEmpty() || item.getTitle().toLowerCase().contains(currentFilter.toLowerCase())) {
-                TaskItem ti = new TaskItem(TaskItem.TYPE_TASK, item.getTitle(), item.getTimestamp());
-                if (item.hasDueDate()) ti.setDueDate(item.getDueDate());
-                taskItems.add(ti);
+                taskItems.add(new TaskItem(TaskItem.TYPE_TASK, item.getTitle(), item.getTimestamp()));
             }
         }
     }
     
-    public void filter(String q) { currentFilter = q; loadTasksFromGlobal(); if (adapter != null) adapter.refreshFromSource(); }
-    public void refreshData() { loadTasksFromGlobal(); if (adapter != null) adapter.refreshFromSource(); }
+    private void updateEmptyState() {
+        if (taskItems.isEmpty()) {
+            recyclerTasks.setVisibility(View.GONE);
+            emptyTasks.setVisibility(View.VISIBLE);
+        } else {
+            recyclerTasks.setVisibility(View.VISIBLE);
+            emptyTasks.setVisibility(View.GONE);
+        }
+    }
+    
+    public void filter(String q) { currentFilter = q; loadTasksFromGlobal(); updateEmptyState(); if (adapter != null) adapter.refreshFromSource(); }
+    public void refreshData() { loadTasksFromGlobal(); updateEmptyState(); if (adapter != null) adapter.refreshFromSource(); }
     public void setSort(boolean l) { if (adapter != null) adapter.setSortByLatest(l); }
     public void setCardView(boolean c) { if (adapter != null) adapter.setCardView(c); }
 }
