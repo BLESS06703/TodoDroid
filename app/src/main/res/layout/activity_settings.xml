@@ -36,12 +36,15 @@
     </LinearLayout>
 
     <LinearLayout
+        android:id="@+id/setting_theme"
         android:layout_width="match_parent"
         android:layout_height="60dp"
         android:orientation="horizontal"
         android:gravity="center_vertical"
         android:paddingHorizontal="20dp"
-        android:background="?attr/selectableItemBackground">
+        android:background="?attr/selectableItemBackground"
+        android:clickable="true"
+        android:focusable="true">
 
         <TextView
             android:layout_width="0dp"
@@ -53,12 +56,13 @@
             android:fontFamily="sans-serif" />
 
         <TextView
+            android:id="@+id/theme_status"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Always On"
+            android:text="On"
             android:textSize="13sp"
-            android:textColor="#888888"
-            android:fontFamily="sans-serif" />
+            android:textColor="#7C3AED"
+            android:fontFamily="sans-serif-medium" />
 
     </LinearLayout>
 
@@ -69,8 +73,7 @@
         android:layout_height="60dp"
         android:orientation="horizontal"
         android:gravity="center_vertical"
-        android:paddingHorizontal="20dp"
-        android:background="?attr/selectableItemBackground">
+        android:paddingHorizontal="20dp">
 
         <TextView
             android:layout_width="0dp"
@@ -98,8 +101,7 @@
         android:layout_height="60dp"
         android:orientation="horizontal"
         android:gravity="center_vertical"
-        android:paddingHorizontal="20dp"
-        android:background="?attr/selectableItemBackground">
+        android:paddingHorizontal="20dp">
 
         <TextView
             android:layout_width="0dp"

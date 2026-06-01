@@ -35,45 +35,30 @@ public class NotesFragment extends Fragment {
     private void loadNotes() {
         ArrayList<TodoItem> allNotes = GlobalData.getInstance().getNotes();
         ArrayList<TodoItem> filtered = new ArrayList<>();
-        
         for (TodoItem note : allNotes) {
-            if (currentFilter.isEmpty() ||
-                note.getTitle().toLowerCase().contains(currentFilter.toLowerCase()) ||
-                note.getContent().toLowerCase().contains(currentFilter.toLowerCase())) {
+            if (currentFilter.isEmpty() || note.getTitle().toLowerCase().contains(currentFilter.toLowerCase())) {
                 filtered.add(note);
             }
         }
-        
         if (filtered.isEmpty()) {
             recyclerNotes.setVisibility(View.GONE);
             emptyNotes.setVisibility(View.VISIBLE);
         } else {
             recyclerNotes.setVisibility(View.VISIBLE);
             emptyNotes.setVisibility(View.GONE);
-            adapter = new NoteAdapter(filtered, (note, position) -> {
-                Intent intent = new Intent(getActivity(), NoteEditorActivity.class);
-                intent.putExtra("note_index", GlobalData.getInstance().getItems().indexOf(note));
-                intent.putExtra("note_title", note.getTitle());
-                intent.putExtra("note_content", note.getContent());
-                intent.putExtra("note_timestamp", note.getTimestamp());
-                intent.putExtra("note_color", note.getThemeColor());
-                intent.putExtra("note_text_color", getTextColorForBg(note.getThemeColor()));
-                startActivity(intent);
+            adapter = new NoteAdapter(filtered, (note, pos) -> {
+                Intent i = new Intent(getActivity(), NoteEditorActivity.class);
+                i.putExtra("note_index", GlobalData.getInstance().getItems().indexOf(note));
+                i.putExtra("note_title", note.getTitle());
+                i.putExtra("note_content", note.getContent());
+                i.putExtra("note_timestamp", note.getTimestamp());
+                i.putExtra("note_color", note.getThemeColor());
+                startActivity(i);
             });
             recyclerNotes.setAdapter(adapter);
         }
     }
     
-    public void filter(String query) {
-        currentFilter = query;
-        loadNotes();
-    }
-    
-    private int getTextColorForBg(int bgColor) {
-        int[] darkBgs = {0xFF121212, 0xFF1F2937, 0xFF3B0764, 0xFF1E3A5F, 0xFF14532D, 0xFF713F12, 0xFF7C2D12, 0xFF7F1D1D};
-        for (int dark : darkBgs) if (dark == bgColor) return 0xFFE5E7EB;
-        return 0xFF1A1A1A;
-    }
-    
+    public void filter(String q) { currentFilter = q; loadNotes(); }
     public void refreshData() { loadNotes(); }
 }
