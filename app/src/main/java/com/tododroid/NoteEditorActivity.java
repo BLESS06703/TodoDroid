@@ -1,7 +1,12 @@
 package com.tododroid;
 
+import android.content.Intent;
+import android.graphics.Bitmap;
 import android.graphics.Color;
+import android.graphics.drawable.BitmapDrawable;
+import android.net.Uri;
 import android.os.Bundle;
+import android.os.Environment;
 import android.text.Editable;
 import android.text.Html;
 import android.text.Spannable;
@@ -16,7 +21,15 @@ import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.content.FileProvider;
+import com.itextpdf.kernel.pdf.PdfDocument;
+import com.itextpdf.kernel.pdf.PdfWriter;
+import com.itextpdf.layout.Document;
+import com.itextpdf.layout.element.Paragraph;
+import java.io.File;
+import java.io.FileOutputStream;
 
 public class NoteEditorActivity extends AppCompatActivity {
     
@@ -26,6 +39,8 @@ public class NoteEditorActivity extends AppCompatActivity {
     private int currentColor = 0xFF121212;
     private int currentTextColor = 0xFFE0E0E0;
     private boolean ignoreTextChange = false;
+    private static final int CAMERA_REQUEST = 300;
+    private static final int SPEECH_REQUEST = 200;
     
     private static final int[][] COLORS = {
         {0xFFFFFFFF, 0xFF1A1A1A}, {0xFFFEE2E2, 0xFF7F1D1D},
@@ -49,6 +64,9 @@ public class NoteEditorActivity extends AppCompatActivity {
         editorContent = findViewById(R.id.editor_content);
         ImageButton btnBack = findViewById(R.id.btn_back);
         TextView btnSave = findViewById(R.id.btn_save);
+        ImageButton btnShare = findViewById(R.id.btn_share);
+        ImageButton micBtn = findViewById(R.id.fmt_mic);
+        ImageButton camBtn = findViewById(R.id.fmt_camera);
         
         if (getIntent().hasExtra("note_title")) {
             noteIndex = getIntent().getIntExtra("note_index", -1);
@@ -66,47 +84,50 @@ public class NoteEditorActivity extends AppCompatActivity {
             markColor(ci);
         }
         
-        // Auto numbering + bullets via TextWatcher
         editorContent.addTextChangedListener(new TextWatcher() {
             @Override public void beforeTextChanged(CharSequence s, int a, int b, int c) {}
             @Override public void onTextChanged(CharSequence s, int a, int b, int c) {}
-            @Override
-            public void afterTextChanged(Editable s) {
+            @Override public void afterTextChanged(Editable s) {
                 if (ignoreTextChange) return;
                 int pos = editorContent.getSelectionStart();
                 if (pos < 2) return;
                 if (s.charAt(pos - 1) != '\n') return;
-                
-                int lineStart = pos - 2;
-                while (lineStart >= 0 && s.charAt(lineStart) != '\n') lineStart--;
-                lineStart++;
-                String prev = s.subSequence(lineStart, pos - 1).toString();
-                
+                int ls = pos - 2;
+                while (ls >= 0 && s.charAt(ls) != '\n') ls--;
+                ls++;
+                String prev = s.subSequence(ls, pos - 1).toString();
                 ignoreTextChange = true;
-                
                 if (prev.matches("\\d+\\.\\s+.*")) {
                     int num = Integer.parseInt(prev.replaceAll("(\\d+)\\..*", "$1"));
-                    if (prev.trim().matches("\\d+\\.\\s*")) {
-                        s.replace(lineStart, pos, "\n");
-                    } else {
-                        s.insert(pos, (num + 1) + ". ");
-                    }
+                    if (prev.trim().matches("\\d+\\.\\s*")) s.replace(ls, pos, "\n");
+                    else s.insert(pos, (num + 1) + ". ");
                 } else if (prev.startsWith("• ") && prev.length() > 2) {
-                    if (prev.trim().equals("•")) {
-                        s.replace(lineStart, pos, "\n");
-                    } else {
-                        s.insert(pos, "• ");
-                    }
+                    if (prev.trim().equals("•")) s.replace(ls, pos, "\n");
+                    else s.insert(pos, "• ");
                 }
-                
                 ignoreTextChange = false;
             }
         });
         
+        micBtn.setOnClickListener(v -> {
+            Intent intent = new Intent(android.speech.RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
+            intent.putExtra(android.speech.RecognizerIntent.EXTRA_LANGUAGE_MODEL, android.speech.RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
+            intent.putExtra(android.speech.RecognizerIntent.EXTRA_PROMPT, "Speak now...");
+            try { startActivityForResult(intent, SPEECH_REQUEST); }
+            catch (Exception e) { Toast.makeText(this, "Speech not available", Toast.LENGTH_SHORT).show(); }
+        });
+        
+        camBtn.setOnClickListener(v -> {
+            Intent cam = new Intent(android.provider.MediaStore.ACTION_IMAGE_CAPTURE);
+            try { startActivityForResult(cam, CAMERA_REQUEST); }
+            catch (Exception e) { Toast.makeText(this, "Camera not available", Toast.LENGTH_SHORT).show(); }
+        });
+        
+        btnShare.setOnClickListener(v -> exportToPdf());
+        
         btnBack.setOnClickListener(v -> finish());
         btnSave.setOnClickListener(v -> save());
         
-        // Formatting
         findViewById(R.id.fmt_bold).setOnClickListener(v -> toggleSpan(new StyleSpan(android.graphics.Typeface.BOLD), R.id.fmt_bold));
         findViewById(R.id.fmt_italic).setOnClickListener(v -> toggleSpan(new StyleSpan(android.graphics.Typeface.ITALIC), R.id.fmt_italic));
         findViewById(R.id.fmt_strike).setOnClickListener(v -> toggleSpan(new StrikethroughSpan(), R.id.fmt_strike));
@@ -118,15 +139,68 @@ public class NoteEditorActivity extends AppCompatActivity {
         findViewById(R.id.fmt_indent_inc).setOnClickListener(v -> indent(40));
         findViewById(R.id.fmt_indent_dec).setOnClickListener(v -> indent(-1));
         
-        // Colors
         for (int i = 0; i < colorIds.length; i++) {
             final int idx = i;
             findViewById(colorIds[i]).setOnClickListener(v -> {
-                currentColor = COLORS[idx][0];
-                currentTextColor = COLORS[idx][1];
-                applyColor(currentColor, currentTextColor);
-                markColor(idx);
+                currentColor = COLORS[idx][0]; currentTextColor = COLORS[idx][1];
+                applyColor(currentColor, currentTextColor); markColor(idx);
             });
+        }
+    }
+    
+    private void exportToPdf() {
+        String title = editorTitle.getText().toString().trim();
+        String content = editorContent.getText().toString().trim();
+        if (title.isEmpty()) title = "Untitled";
+        
+        try {
+            File dir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
+            File file = new File(dir, title.replaceAll("[^a-zA-Z0-9]", "_") + ".pdf");
+            
+            PdfWriter writer = new PdfWriter(new FileOutputStream(file));
+            PdfDocument pdf = new PdfDocument(writer);
+            Document document = new Document(pdf);
+            
+            document.add(new Paragraph(title).setBold().setFontSize(18));
+            document.add(new Paragraph("\n"));
+            document.add(new Paragraph(content).setFontSize(12));
+            
+            document.close();
+            
+            Uri uri = FileProvider.getUriForFile(this, getPackageName() + ".fileprovider", file);
+            Intent share = new Intent(Intent.ACTION_SEND);
+            share.setType("application/pdf");
+            share.putExtra(Intent.EXTRA_STREAM, uri);
+            share.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+            startActivity(Intent.createChooser(share, "Export PDF"));
+            
+            Toast.makeText(this, "PDF exported!", Toast.LENGTH_SHORT).show();
+        } catch (Exception e) {
+            // Fallback to plain text share
+            Intent share = new Intent(Intent.ACTION_SEND);
+            share.setType("text/plain");
+            share.putExtra(Intent.EXTRA_TEXT, title + "\n\n" + content);
+            startActivity(Intent.createChooser(share, "Share Note"));
+            Toast.makeText(this, "Shared as text", Toast.LENGTH_SHORT).show();
+        }
+    }
+    
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == SPEECH_REQUEST && resultCode == RESULT_OK && data != null) {
+            java.util.ArrayList<String> results = data.getStringArrayListExtra(android.speech.RecognizerIntent.EXTRA_RESULTS);
+            if (results != null && !results.isEmpty()) {
+                insertAtCursor(results.get(0) + " ");
+                Toast.makeText(this, "Speech converted", Toast.LENGTH_SHORT).show();
+            }
+        }
+        if (requestCode == CAMERA_REQUEST && resultCode == RESULT_OK && data != null) {
+            Bitmap photo = (Bitmap) data.getExtras().get("data");
+            if (photo != null) {
+                editorRoot.setBackground(new BitmapDrawable(getResources(), photo));
+                Toast.makeText(this, "Photo set as background", Toast.LENGTH_SHORT).show();
+            }
         }
     }
     
@@ -139,9 +213,9 @@ public class NoteEditorActivity extends AppCompatActivity {
         int s = editorContent.getSelectionStart(), e = editorContent.getSelectionEnd();
         if (s == e) return;
         Spannable str = editorContent.getText();
-        Object[] existing = str.getSpans(s, e, span.getClass());
+        Object[] ex = str.getSpans(s, e, span.getClass());
         boolean has = false;
-        for (Object ex : existing) { str.removeSpan(ex); has = true; }
+        for (Object o : ex) { str.removeSpan(o); has = true; }
         if (!has) str.setSpan(span, s, e, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
         ((TextView)findViewById(btnId)).setTextColor(has ? 0xFF888888 : 0xFF7C3AED);
     }
@@ -149,12 +223,8 @@ public class NoteEditorActivity extends AppCompatActivity {
     private void indent(int px) {
         int s = editorContent.getSelectionStart(), e = editorContent.getSelectionEnd();
         if (s == e) return;
-        if (px < 0) {
-            for (LeadingMarginSpan sp : editorContent.getText().getSpans(s, e, LeadingMarginSpan.class))
-                editorContent.getText().removeSpan(sp);
-        } else {
-            editorContent.getText().setSpan(new LeadingMarginSpan.Standard(px), s, e, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
-        }
+        if (px < 0) for (LeadingMarginSpan sp : editorContent.getText().getSpans(s, e, LeadingMarginSpan.class)) editorContent.getText().removeSpan(sp);
+        else editorContent.getText().setSpan(new LeadingMarginSpan.Standard(px), s, e, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
     }
     
     private void hlAlign(int id) {
@@ -164,10 +234,8 @@ public class NoteEditorActivity extends AppCompatActivity {
     
     private void applyColor(int bg, int txt) {
         editorRoot.setBackgroundColor(bg);
-        editorTitle.setTextColor(txt);
-        editorTitle.setHintTextColor(adjust(txt, 0.5f));
-        editorContent.setTextColor(txt);
-        editorContent.setHintTextColor(adjust(txt, 0.4f));
+        editorTitle.setTextColor(txt); editorTitle.setHintTextColor(adjust(txt, 0.5f));
+        editorContent.setTextColor(txt); editorContent.setHintTextColor(adjust(txt, 0.4f));
     }
     
     private void markColor(int idx) {

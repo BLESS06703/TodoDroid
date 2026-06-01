@@ -6,13 +6,12 @@
     android:orientation="vertical"
     android:id="@+id/editor_root">
 
-    <!-- Top Toolbar -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="56dp"
         android:orientation="horizontal"
         android:gravity="center_vertical"
-        android:paddingHorizontal="16dp"
+        android:paddingHorizontal="12dp"
         android:background="#1A1A1A">
 
         <ImageButton
@@ -33,7 +32,17 @@
             android:textSize="16sp"
             android:textColor="#FFFFFF"
             android:fontFamily="sans-serif-medium"
-            android:layout_marginStart="8dp" />
+            android:layout_marginStart="4dp" />
+
+        <ImageButton
+            android:id="@+id/btn_share"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:src="@android:drawable/ic_menu_share"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="Share"
+            android:padding="8dp"
+            app:tint="#888888" />
 
         <TextView
             android:id="@+id/btn_save"
@@ -51,7 +60,6 @@
 
     </LinearLayout>
 
-    <!-- Title input -->
     <EditText
         android:id="@+id/editor_title"
         android:layout_width="match_parent"
@@ -75,7 +83,6 @@
         android:background="#33FFFFFF"
         android:layout_marginHorizontal="20dp" />
 
-    <!-- Color theme bar -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="48dp"
@@ -84,90 +91,37 @@
         android:paddingHorizontal="16dp"
         android:layout_marginTop="4dp">
 
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Theme"
-            android:textSize="11sp"
-            android:textColor="#888888"
-            android:fontFamily="sans-serif"
-            android:layout_marginEnd="10dp" />
+        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:text="Theme" android:textSize="11sp" android:textColor="#888888"
+            android:fontFamily="sans-serif" android:layout_marginEnd="10dp" />
 
-        <View
-            android:id="@+id/color_default"
-            android:layout_width="28dp"
-            android:layout_height="28dp"
-            android:background="@drawable/color_circle_white"
-            android:layout_marginEnd="8dp"
-            android:clickable="true"
-            android:focusable="true" />
-
-        <View
-            android:id="@+id/color_red"
-            android:layout_width="28dp"
-            android:layout_height="28dp"
-            android:background="@drawable/color_circle_red"
-            android:layout_marginEnd="8dp"
-            android:clickable="true"
-            android:focusable="true" />
-
-        <View
-            android:id="@+id/color_orange"
-            android:layout_width="28dp"
-            android:layout_height="28dp"
-            android:background="@drawable/color_circle_orange"
-            android:layout_marginEnd="8dp"
-            android:clickable="true"
-            android:focusable="true" />
-
-        <View
-            android:id="@+id/color_yellow"
-            android:layout_width="28dp"
-            android:layout_height="28dp"
-            android:background="@drawable/color_circle_yellow"
-            android:layout_marginEnd="8dp"
-            android:clickable="true"
-            android:focusable="true" />
-
-        <View
-            android:id="@+id/color_green"
-            android:layout_width="28dp"
-            android:layout_height="28dp"
-            android:background="@drawable/color_circle_green"
-            android:layout_marginEnd="8dp"
-            android:clickable="true"
-            android:focusable="true" />
-
-        <View
-            android:id="@+id/color_blue"
-            android:layout_width="28dp"
-            android:layout_height="28dp"
-            android:background="@drawable/color_circle_blue"
-            android:layout_marginEnd="8dp"
-            android:clickable="true"
-            android:focusable="true" />
-
-        <View
-            android:id="@+id/color_purple"
-            android:layout_width="28dp"
-            android:layout_height="28dp"
-            android:background="@drawable/color_circle_purple"
-            android:layout_marginEnd="8dp"
-            android:clickable="true"
-            android:focusable="true" />
-
-        <View
-            android:id="@+id/color_dark"
-            android:layout_width="28dp"
-            android:layout_height="28dp"
-            android:background="@drawable/color_circle_dark"
-            android:layout_marginEnd="8dp"
-            android:clickable="true"
-            android:focusable="true" />
+        <View android:id="@+id/color_default" android:layout_width="28dp" android:layout_height="28dp"
+            android:background="@drawable/color_circle_white" android:layout_marginEnd="8dp"
+            android:clickable="true" android:focusable="true" />
+        <View android:id="@+id/color_red" android:layout_width="28dp" android:layout_height="28dp"
+            android:background="@drawable/color_circle_red" android:layout_marginEnd="8dp"
+            android:clickable="true" android:focusable="true" />
+        <View android:id="@+id/color_orange" android:layout_width="28dp" android:layout_height="28dp"
+            android:background="@drawable/color_circle_orange" android:layout_marginEnd="8dp"
+            android:clickable="true" android:focusable="true" />
+        <View android:id="@+id/color_yellow" android:layout_width="28dp" android:layout_height="28dp"
+            android:background="@drawable/color_circle_yellow" android:layout_marginEnd="8dp"
+            android:clickable="true" android:focusable="true" />
+        <View android:id="@+id/color_green" android:layout_width="28dp" android:layout_height="28dp"
+            android:background="@drawable/color_circle_green" android:layout_marginEnd="8dp"
+            android:clickable="true" android:focusable="true" />
+        <View android:id="@+id/color_blue" android:layout_width="28dp" android:layout_height="28dp"
+            android:background="@drawable/color_circle_blue" android:layout_marginEnd="8dp"
+            android:clickable="true" android:focusable="true" />
+        <View android:id="@+id/color_purple" android:layout_width="28dp" android:layout_height="28dp"
+            android:background="@drawable/color_circle_purple" android:layout_marginEnd="8dp"
+            android:clickable="true" android:focusable="true" />
+        <View android:id="@+id/color_dark" android:layout_width="28dp" android:layout_height="28dp"
+            android:background="@drawable/color_circle_dark" android:layout_marginEnd="8dp"
+            android:clickable="true" android:focusable="true" />
 
     </LinearLayout>
 
-    <!-- Content area -->
     <EditText
         android:id="@+id/editor_content"
         android:layout_width="match_parent"
@@ -185,7 +139,6 @@
         android:gravity="top|start"
         android:inputType="textMultiLine|textCapSentences" />
 
-    <!-- Formatting toolbar -->
     <HorizontalScrollView
         android:layout_width="match_parent"
         android:layout_height="52dp"
@@ -199,149 +152,84 @@
             android:gravity="center_vertical"
             android:paddingHorizontal="8dp">
 
-            <TextView
-                android:id="@+id/fmt_bold"
-                android:layout_width="44dp"
-                android:layout_height="40dp"
-                android:text="B"
-                android:textSize="18sp"
-                android:textStyle="bold"
-                android:textColor="#888888"
-                android:fontFamily="sans-serif-medium"
-                android:gravity="center"
-                android:background="?attr/selectableItemBackgroundBorderless"
-                android:clickable="true"
-                android:focusable="true" />
+            <TextView android:id="@+id/fmt_bold" android:layout_width="44dp" android:layout_height="40dp"
+                android:text="B" android:textSize="18sp" android:textStyle="bold" android:textColor="#888888"
+                android:gravity="center" android:background="?attr/selectableItemBackgroundBorderless"
+                android:clickable="true" android:focusable="true" />
+            <TextView android:id="@+id/fmt_italic" android:layout_width="44dp" android:layout_height="40dp"
+                android:text="I" android:textSize="18sp" android:textStyle="italic" android:textColor="#888888"
+                android:gravity="center" android:background="?attr/selectableItemBackgroundBorderless"
+                android:clickable="true" android:focusable="true" />
+            <TextView android:id="@+id/fmt_strike" android:layout_width="44dp" android:layout_height="40dp"
+                android:text="S" android:textSize="16sp" android:textColor="#888888"
+                android:gravity="center" android:background="?attr/selectableItemBackgroundBorderless"
+                android:clickable="true" android:focusable="true" />
 
-            <TextView
-                android:id="@+id/fmt_italic"
-                android:layout_width="44dp"
-                android:layout_height="40dp"
-                android:text="I"
-                android:textSize="18sp"
-                android:textStyle="italic"
-                android:textColor="#888888"
-                android:fontFamily="sans-serif"
-                android:gravity="center"
-                android:background="?attr/selectableItemBackgroundBorderless"
-                android:clickable="true"
-                android:focusable="true" />
-
-            <TextView
-                android:id="@+id/fmt_strike"
-                android:layout_width="44dp"
-                android:layout_height="40dp"
-                android:text="S"
-                android:textSize="16sp"
-                android:textColor="#888888"
-                android:fontFamily="sans-serif"
-                android:gravity="center"
-                android:background="?attr/selectableItemBackgroundBorderless"
-                android:clickable="true"
-                android:focusable="true" />
-
-            <View
-                android:layout_width="1dp"
-                android:layout_height="24dp"
-                android:background="#333333"
+            <View android:layout_width="1dp" android:layout_height="24dp" android:background="#333333"
                 android:layout_marginHorizontal="4dp" />
 
-            <TextView
-                android:id="@+id/fmt_bullet"
-                android:layout_width="44dp"
-                android:layout_height="40dp"
-                android:text="•"
-                android:textSize="20sp"
-                android:textColor="#888888"
-                android:gravity="center"
-                android:background="?attr/selectableItemBackgroundBorderless"
-                android:clickable="true"
-                android:focusable="true" />
+            <TextView android:id="@+id/fmt_bullet" android:layout_width="44dp" android:layout_height="40dp"
+                android:text="•" android:textSize="20sp" android:textColor="#888888"
+                android:gravity="center" android:background="?attr/selectableItemBackgroundBorderless"
+                android:clickable="true" android:focusable="true" />
+            <TextView android:id="@+id/fmt_number" android:layout_width="44dp" android:layout_height="40dp"
+                android:text="1." android:textSize="16sp" android:textColor="#888888"
+                android:gravity="center" android:background="?attr/selectableItemBackgroundBorderless"
+                android:clickable="true" android:focusable="true" />
 
-            <TextView
-                android:id="@+id/fmt_number"
-                android:layout_width="44dp"
-                android:layout_height="40dp"
-                android:text="1."
-                android:textSize="16sp"
-                android:textColor="#888888"
-                android:fontFamily="sans-serif"
-                android:gravity="center"
-                android:background="?attr/selectableItemBackgroundBorderless"
-                android:clickable="true"
-                android:focusable="true" />
-
-            <View
-                android:layout_width="1dp"
-                android:layout_height="24dp"
-                android:background="#333333"
+            <View android:layout_width="1dp" android:layout_height="24dp" android:background="#333333"
                 android:layout_marginHorizontal="4dp" />
 
-            <TextView
-                android:id="@+id/fmt_align_left"
-                android:layout_width="44dp"
-                android:layout_height="40dp"
-                android:text="⫷"
-                android:textSize="16sp"
-                android:textColor="#888888"
-                android:gravity="center"
-                android:background="?attr/selectableItemBackgroundBorderless"
-                android:clickable="true"
-                android:focusable="true" />
+            <TextView android:id="@+id/fmt_align_left" android:layout_width="44dp" android:layout_height="40dp"
+                android:text="⫷" android:textSize="16sp" android:textColor="#888888"
+                android:gravity="center" android:background="?attr/selectableItemBackgroundBorderless"
+                android:clickable="true" android:focusable="true" />
+            <TextView android:id="@+id/fmt_align_center" android:layout_width="44dp" android:layout_height="40dp"
+                android:text="⫿" android:textSize="16sp" android:textColor="#888888"
+                android:gravity="center" android:background="?attr/selectableItemBackgroundBorderless"
+                android:clickable="true" android:focusable="true" />
+            <TextView android:id="@+id/fmt_align_right" android:layout_width="44dp" android:layout_height="40dp"
+                android:text="⫸" android:textSize="16sp" android:textColor="#888888"
+                android:gravity="center" android:background="?attr/selectableItemBackgroundBorderless"
+                android:clickable="true" android:focusable="true" />
 
-            <TextView
-                android:id="@+id/fmt_align_center"
-                android:layout_width="44dp"
-                android:layout_height="40dp"
-                android:text="⫿"
-                android:textSize="16sp"
-                android:textColor="#888888"
-                android:gravity="center"
-                android:background="?attr/selectableItemBackgroundBorderless"
-                android:clickable="true"
-                android:focusable="true" />
-
-            <TextView
-                android:id="@+id/fmt_align_right"
-                android:layout_width="44dp"
-                android:layout_height="40dp"
-                android:text="⫸"
-                android:textSize="16sp"
-                android:textColor="#888888"
-                android:gravity="center"
-                android:background="?attr/selectableItemBackgroundBorderless"
-                android:clickable="true"
-                android:focusable="true" />
-
-            <View
-                android:layout_width="1dp"
-                android:layout_height="24dp"
-                android:background="#333333"
+            <View android:layout_width="1dp" android:layout_height="24dp" android:background="#333333"
                 android:layout_marginHorizontal="4dp" />
 
-            <TextView
-                android:id="@+id/fmt_indent_inc"
-                android:layout_width="44dp"
-                android:layout_height="40dp"
-                android:text="→"
-                android:textSize="18sp"
-                android:textColor="#888888"
-                android:gravity="center"
-                android:background="?attr/selectableItemBackgroundBorderless"
-                android:clickable="true"
-                android:focusable="true" />
+            <TextView android:id="@+id/fmt_indent_inc" android:layout_width="44dp" android:layout_height="40dp"
+                android:text="→" android:textSize="18sp" android:textColor="#888888"
+                android:gravity="center" android:background="?attr/selectableItemBackgroundBorderless"
+                android:clickable="true" android:focusable="true" />
+            <TextView android:id="@+id/fmt_indent_dec" android:layout_width="44dp" android:layout_height="40dp"
+                android:text="←" android:textSize="18sp" android:textColor="#888888"
+                android:gravity="center" android:background="?attr/selectableItemBackgroundBorderless"
+                android:clickable="true" android:focusable="true" />
 
-            <TextView
-                android:id="@+id/fmt_indent_dec"
-                android:layout_width="44dp"
+            <View android:layout_width="1dp" android:layout_height="24dp" android:background="#333333"
+                android:layout_marginHorizontal="4dp" />
+
+            <ImageButton
+                android:id="@+id/fmt_mic"
+                android:layout_width="40dp"
                 android:layout_height="40dp"
-                android:text="←"
-                android:textSize="18sp"
-                android:textColor="#888888"
-                android:gravity="center"
+                android:src="@android:drawable/ic_btn_speak_now"
                 android:background="?attr/selectableItemBackgroundBorderless"
-                android:clickable="true"
-                android:focusable="true" />
+                android:contentDescription="Record audio"
+                android:padding="8dp"
+                app:tint="#888888" />
+
+            <View android:layout_width="1dp" android:layout_height="24dp" android:background="#333333"
+                android:layout_marginHorizontal="4dp" />
+
+            <ImageButton
+                android:id="@+id/fmt_camera"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:src="@android:drawable/ic_menu_camera"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="Camera"
+                android:padding="8dp"
+                app:tint="#888888" />
 
         </LinearLayout>
     </HorizontalScrollView>
