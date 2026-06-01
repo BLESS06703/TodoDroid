@@ -17,14 +17,21 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
       
+      - name: Create keystore
+        run: |
+          keytool -genkey -v -keystore tododroid-release.keystore -alias tododroid \
+            -keyalg RSA -keysize 2048 -validity 10000 \
+            -storepass tododroid123 -keypass tododroid123 \
+            -dname "CN=BLESS SCOTT, OU=TodoDroid, O=BLESS SCOTT, L=Malawi, ST=Malawi, C=MW"
+      
       - name: Make gradlew executable
         run: chmod +x gradlew
       
-      - name: Build debug APK
-        run: ./gradlew assembleDebug
+      - name: Build release APK
+        run: ./gradlew assembleRelease
       
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: TodoDroid-debug
-          path: app/build/outputs/apk/debug/app-debug.apk
+          name: TodoDroid-Release
+          path: app/build/outputs/apk/release/app-release.apk
