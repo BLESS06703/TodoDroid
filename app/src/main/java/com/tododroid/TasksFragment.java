@@ -17,7 +17,7 @@ public class TasksFragment extends Fragment {
     
     private TodoAdapter adapter;
     private RecyclerView recyclerTasks;
-    private LinearLayout toggleCompleted, emptyTasks;
+    private LinearLayout toggleCompleted;
     private TextView toggleText;
     private View toggleDot;
     private ArrayList<TaskItem> taskItems;
@@ -29,7 +29,6 @@ public class TasksFragment extends Fragment {
                              @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_tasks, container, false);
         recyclerTasks = view.findViewById(R.id.recycler_tasks);
-        emptyTasks = view.findViewById(R.id.empty_tasks);
         toggleCompleted = view.findViewById(R.id.toggle_completed);
         toggleText = view.findViewById(R.id.toggle_text);
         toggleDot = view.findViewById(R.id.toggle_dot);
@@ -46,7 +45,6 @@ public class TasksFragment extends Fragment {
             toggleText.setText(ns ? "Show done" : "Hide done");
             toggleDot.setBackgroundResource(ns ? R.drawable.toggle_dot_on : R.drawable.toggle_dot_off);
         });
-        updateEmptyState();
         return view;
     }
     
@@ -59,18 +57,8 @@ public class TasksFragment extends Fragment {
         }
     }
     
-    private void updateEmptyState() {
-        if (taskItems.isEmpty()) {
-            recyclerTasks.setVisibility(View.GONE);
-            emptyTasks.setVisibility(View.VISIBLE);
-        } else {
-            recyclerTasks.setVisibility(View.VISIBLE);
-            emptyTasks.setVisibility(View.GONE);
-        }
-    }
-    
-    public void filter(String q) { currentFilter = q; loadTasksFromGlobal(); updateEmptyState(); if (adapter != null) adapter.refreshFromSource(); }
-    public void refreshData() { loadTasksFromGlobal(); updateEmptyState(); if (adapter != null) adapter.refreshFromSource(); }
+    public void filter(String q) { currentFilter = q; loadTasksFromGlobal(); if (adapter != null) adapter.refreshFromSource(); }
+    public void refreshData() { loadTasksFromGlobal(); if (adapter != null) adapter.refreshFromSource(); }
     public void setSort(boolean l) { if (adapter != null) adapter.setSortByLatest(l); }
     public void setCardView(boolean c) { if (adapter != null) adapter.setCardView(c); }
 }
