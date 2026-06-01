@@ -19,7 +19,7 @@ public class AboutActivity extends AppCompatActivity {
             openLink("https://github.com/BLESS06703"));
         
         findViewById(R.id.link_fb).setOnClickListener(v -> 
-            openLink("https://facebook.com/BlessKaundah"));
+            openLink("https://www.facebook.com/share/1GUjS85j2e/"));
         
         findViewById(R.id.link_ig).setOnClickListener(v -> 
             openLink("https://instagram.com/bless.kaundah0"));
@@ -27,12 +27,18 @@ public class AboutActivity extends AppCompatActivity {
         findViewById(R.id.link_email).setOnClickListener(v -> {
             Intent email = new Intent(Intent.ACTION_SENDTO);
             email.setData(Uri.parse("mailto:blesskaunda056@gmail.com"));
-            email.putExtra(Intent.EXTRA_SUBJECT, "TodoDroid App");
-            try {
-                startActivity(email);
-            } catch (Exception e) {
-                Toast.makeText(this, "No email app found", Toast.LENGTH_SHORT).show();
-            }
+            email.putExtra(Intent.EXTRA_SUBJECT, "TodoDroid Feedback");
+            try { startActivity(email); }
+            catch (Exception e) { Toast.makeText(this, "No email app found", Toast.LENGTH_SHORT).show(); }
+        });
+        
+        findViewById(R.id.btn_feedback).setOnClickListener(v -> {
+            Intent email = new Intent(Intent.ACTION_SENDTO);
+            email.setData(Uri.parse("mailto:blesskaunda056@gmail.com"));
+            email.putExtra(Intent.EXTRA_SUBJECT, "TodoDroid Feedback");
+            email.putExtra(Intent.EXTRA_TEXT, "My feedback about TodoDroid:\n\n");
+            try { startActivity(email); }
+            catch (Exception e) { Toast.makeText(this, "No email app found", Toast.LENGTH_SHORT).show(); }
         });
     }
     
