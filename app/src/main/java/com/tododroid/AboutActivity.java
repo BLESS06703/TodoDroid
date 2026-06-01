@@ -19,10 +19,21 @@ public class AboutActivity extends AppCompatActivity {
             openLink("https://github.com/BLESS06703"));
         
         findViewById(R.id.link_fb).setOnClickListener(v -> 
-            openLink("https://facebook.com/bless.kaundah"));
+            openLink("https://facebook.com/BlessKaundah"));
         
         findViewById(R.id.link_ig).setOnClickListener(v -> 
             openLink("https://instagram.com/bless.kaundah0"));
+        
+        findViewById(R.id.link_email).setOnClickListener(v -> {
+            Intent email = new Intent(Intent.ACTION_SENDTO);
+            email.setData(Uri.parse("mailto:blesskaunda056@gmail.com"));
+            email.putExtra(Intent.EXTRA_SUBJECT, "TodoDroid App");
+            try {
+                startActivity(email);
+            } catch (Exception e) {
+                Toast.makeText(this, "No email app found", Toast.LENGTH_SHORT).show();
+            }
+        });
     }
     
     private void openLink(String url) {

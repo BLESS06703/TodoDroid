@@ -116,7 +116,8 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
-                android:gravity="center">
+                android:gravity="center"
+                android:layout_marginBottom="16dp">
 
                 <LinearLayout
                     android:id="@+id/link_github"
@@ -124,7 +125,7 @@
                     android:layout_height="56dp"
                     android:gravity="center"
                     android:background="@drawable/social_btn_bg"
-                    android:layout_marginEnd="16dp"
+                    android:layout_marginEnd="12dp"
                     android:clickable="true"
                     android:focusable="true"
                     android:foreground="?attr/selectableItemBackgroundBorderless">
@@ -143,7 +144,7 @@
                     android:layout_height="56dp"
                     android:gravity="center"
                     android:background="@drawable/social_btn_bg"
-                    android:layout_marginEnd="16dp"
+                    android:layout_marginEnd="12dp"
                     android:clickable="true"
                     android:focusable="true"
                     android:foreground="?attr/selectableItemBackgroundBorderless">
@@ -162,6 +163,7 @@
                     android:layout_height="56dp"
                     android:gravity="center"
                     android:background="@drawable/social_btn_bg"
+                    android:layout_marginEnd="12dp"
                     android:clickable="true"
                     android:focusable="true"
                     android:foreground="?attr/selectableItemBackgroundBorderless">
@@ -170,6 +172,24 @@
                         android:layout_width="24dp"
                         android:layout_height="24dp"
                         android:src="@android:drawable/ic_menu_camera"
+                        app:tint="#CCCCCC" />
+
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/link_email"
+                    android:layout_width="56dp"
+                    android:layout_height="56dp"
+                    android:gravity="center"
+                    android:background="@drawable/social_btn_bg"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:foreground="?attr/selectableItemBackgroundBorderless">
+
+                    <ImageView
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:src="@android:drawable/ic_dialog_email"
                         app:tint="#CCCCCC" />
 
                 </LinearLayout>
