@@ -4,9 +4,7 @@ import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.drawable.BitmapDrawable;
-import android.net.Uri;
 import android.os.Bundle;
-import android.os.Environment;
 import android.text.Editable;
 import android.text.Html;
 import android.text.Spannable;
@@ -23,13 +21,6 @@ import android.widget.TextView;
 import android.widget.Toast;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.content.FileProvider;
-import com.itextpdf.kernel.pdf.PdfDocument;
-import com.itextpdf.kernel.pdf.PdfWriter;
-import com.itextpdf.layout.Document;
-import com.itextpdf.layout.element.Paragraph;
-import java.io.File;
-import java.io.FileOutputStream;
 
 public class NoteEditorActivity extends AppCompatActivity {
     
@@ -123,7 +114,15 @@ public class NoteEditorActivity extends AppCompatActivity {
             catch (Exception e) { Toast.makeText(this, "Camera not available", Toast.LENGTH_SHORT).show(); }
         });
         
-        btnShare.setOnClickListener(v -> exportToPdf());
+        btnShare.setOnClickListener(v -> {
+            String title = editorTitle.getText().toString().trim();
+            String content = editorContent.getText().toString().trim();
+            Intent share = new Intent(Intent.ACTION_SEND);
+            share.setType("text/plain");
+            share.putExtra(Intent.EXTRA_SUBJECT, title);
+            share.putExtra(Intent.EXTRA_TEXT, title + "\n\n" + content);
+            startActivity(Intent.createChooser(share, "Share Note"));
+        });
         
         btnBack.setOnClickListener(v -> finish());
         btnSave.setOnClickListener(v -> save());
@@ -148,66 +147,20 @@ public class NoteEditorActivity extends AppCompatActivity {
         }
     }
     
-    private void exportToPdf() {
-        String title = editorTitle.getText().toString().trim();
-        String content = editorContent.getText().toString().trim();
-        if (title.isEmpty()) title = "Untitled";
-        
-        try {
-            File dir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
-            File file = new File(dir, title.replaceAll("[^a-zA-Z0-9]", "_") + ".pdf");
-            
-            PdfWriter writer = new PdfWriter(new FileOutputStream(file));
-            PdfDocument pdf = new PdfDocument(writer);
-            Document document = new Document(pdf);
-            
-            document.add(new Paragraph(title).setBold().setFontSize(18));
-            document.add(new Paragraph("\n"));
-            document.add(new Paragraph(content).setFontSize(12));
-            
-            document.close();
-            
-            Uri uri = FileProvider.getUriForFile(this, getPackageName() + ".fileprovider", file);
-            Intent share = new Intent(Intent.ACTION_SEND);
-            share.setType("application/pdf");
-            share.putExtra(Intent.EXTRA_STREAM, uri);
-            share.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-            startActivity(Intent.createChooser(share, "Export PDF"));
-            
-            Toast.makeText(this, "PDF exported!", Toast.LENGTH_SHORT).show();
-        } catch (Exception e) {
-            // Fallback to plain text share
-            Intent share = new Intent(Intent.ACTION_SEND);
-            share.setType("text/plain");
-            share.putExtra(Intent.EXTRA_TEXT, title + "\n\n" + content);
-            startActivity(Intent.createChooser(share, "Share Note"));
-            Toast.makeText(this, "Shared as text", Toast.LENGTH_SHORT).show();
-        }
-    }
-    
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         if (requestCode == SPEECH_REQUEST && resultCode == RESULT_OK && data != null) {
             java.util.ArrayList<String> results = data.getStringArrayListExtra(android.speech.RecognizerIntent.EXTRA_RESULTS);
-            if (results != null && !results.isEmpty()) {
-                insertAtCursor(results.get(0) + " ");
-                Toast.makeText(this, "Speech converted", Toast.LENGTH_SHORT).show();
-            }
+            if (results != null && !results.isEmpty()) insertAtCursor(results.get(0) + " ");
         }
         if (requestCode == CAMERA_REQUEST && resultCode == RESULT_OK && data != null) {
             Bitmap photo = (Bitmap) data.getExtras().get("data");
-            if (photo != null) {
-                editorRoot.setBackground(new BitmapDrawable(getResources(), photo));
-                Toast.makeText(this, "Photo set as background", Toast.LENGTH_SHORT).show();
-            }
+            if (photo != null) editorRoot.setBackground(new BitmapDrawable(getResources(), photo));
         }
     }
     
-    private void insertAtCursor(String text) {
-        int pos = editorContent.getSelectionStart();
-        editorContent.getText().insert(pos, text);
-    }
+    private void insertAtCursor(String text) { editorContent.getText().insert(editorContent.getSelectionStart(), text); }
     
     private void toggleSpan(Object span, int btnId) {
         int s = editorContent.getSelectionStart(), e = editorContent.getSelectionEnd();
@@ -243,9 +196,7 @@ public class NoteEditorActivity extends AppCompatActivity {
         findViewById(colorIds[idx]).setBackgroundResource(R.drawable.color_circle_selected);
     }
     
-    private int adjust(int c, float f) {
-        return Color.argb((int)(Color.alpha(c)*f), Color.red(c), Color.green(c), Color.blue(c));
-    }
+    private int adjust(int c, float f) { return Color.argb((int)(Color.alpha(c)*f), Color.red(c), Color.green(c), Color.blue(c)); }
     
     private void save() {
         String title = editorTitle.getText().toString().trim();
