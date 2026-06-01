@@ -1,9 +1,13 @@
 package com.tododroid;
 
+import android.content.Intent;
 import android.content.SharedPreferences;
+import android.net.Uri;
 import android.os.Bundle;
 import android.widget.ImageButton;
 import android.widget.TextView;
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.app.AppCompatDelegate;
 
@@ -33,7 +37,26 @@ public class SettingsActivity extends AppCompatActivity {
             applyTheme();
             updateThemeLabel();
         });
+        
+        findViewById(R.id.setting_backup).setOnClickListener(v -> {
+            CloudBackup.backupToDrive(this);
+        });
+        
+        findViewById(R.id.setting_restore).setOnClickListener(v -> {
+            Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+            intent.setType("application/json");
+            intent.addCategory(Intent.CATEGORY_OPENABLE);
+            restoreLauncher.launch(intent);
+        });
     }
+    
+    private final ActivityResultLauncher<Intent> restoreLauncher = 
+        registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), result -> {
+            if (result.getResultCode() == RESULT_OK && result.getData() != null) {
+                Uri uri = result.getData().getData();
+                CloudBackup.restoreFromFile(this, uri);
+            }
+        });
     
     private void applyTheme() {
         if (isDark) {
