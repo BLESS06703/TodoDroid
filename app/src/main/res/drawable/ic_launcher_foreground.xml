@@ -12,10 +12,9 @@
 
     <!-- Checkmark -->
     <path
-        android:fillColor="#FFFFFF"
-        android:pathData="M42,54l6,6l18,-18"
-        android:strokeWidth="4"
+        android:fillColor="@android:color/transparent"
         android:strokeColor="#FFFFFF"
-        android:fillColor="@android:color/transparent" />
+        android:strokeWidth="4"
+        android:pathData="M42,54l6,6l18,-18" />
 
 </vector>
