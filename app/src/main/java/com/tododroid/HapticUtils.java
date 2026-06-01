@@ -8,11 +8,15 @@ import android.view.View;
 
 public class HapticUtils {
     public static void lightTap(View view) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            Vibrator v = (Vibrator) view.getContext().getSystemService(Context.VIBRATOR_SERVICE);
-            if (v != null && v.hasVibrator()) {
-                v.vibrate(VibrationEffect.createOneShot(20, VibrationEffect.DEFAULT_AMPLITUDE));
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                Vibrator v = (Vibrator) view.getContext().getSystemService(Context.VIBRATOR_SERVICE);
+                if (v != null && v.hasVibrator()) {
+                    v.vibrate(VibrationEffect.createOneShot(20, VibrationEffect.DEFAULT_AMPLITUDE));
+                }
             }
+        } catch (Exception e) {
+            // Ignore - haptic not critical
         }
     }
 }

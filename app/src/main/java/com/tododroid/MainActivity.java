@@ -51,16 +51,16 @@ public class MainActivity extends AppCompatActivity {
         setupViewPager();
         if (GlobalData.getInstance().getItems().isEmpty()) seedDemoData();
         
-        btnMenu.setOnClickListener(v -> { HapticUtils.lightTap(v); drawerLayout.openDrawer(GravityCompat.START); });
-        tabTasks.setOnClickListener(v -> { HapticUtils.lightTap(v); viewPager.setCurrentItem(0); selectTab(true); });
-        tabNotes.setOnClickListener(v -> { HapticUtils.lightTap(v); viewPager.setCurrentItem(1); selectTab(false); });
+        btnMenu.setOnClickListener(v -> drawerLayout.openDrawer(GravityCompat.START));
+        tabTasks.setOnClickListener(v -> { viewPager.setCurrentItem(0); selectTab(true); });
+        tabNotes.setOnClickListener(v -> { viewPager.setCurrentItem(1); selectTab(false); });
         
         viewPager.registerOnPageChangeCallback(new ViewPager2.OnPageChangeCallback() {
             @Override public void onPageSelected(int p) { selectTab(p == 0); }
         });
         
-        btnSort.setOnClickListener(v -> { HapticUtils.lightTap(v); showSortPopup(v); });
-        btnCreate.setOnClickListener(v -> { HapticUtils.lightTap(v); showCreateSheet(); });
+        btnSort.setOnClickListener(v -> showSortPopup(v));
+        btnCreate.setOnClickListener(v -> showCreateSheet());
         searchInput.setHint("Search tasks and notes...");
         
         searchInput.addTextChangedListener(new TextWatcher() {
@@ -93,8 +93,8 @@ public class MainActivity extends AppCompatActivity {
         BottomSheetDialog s = new BottomSheetDialog(this);
         View v = LayoutInflater.from(this).inflate(R.layout.bottom_sheet_create, null);
         s.setContentView(v);
-        v.findViewById(R.id.create_note).setOnClickListener(x -> { HapticUtils.lightTap(x); s.dismiss(); startActivity(new Intent(this, NoteEditorActivity.class)); });
-        v.findViewById(R.id.create_task).setOnClickListener(x -> { HapticUtils.lightTap(x); s.dismiss(); showQuickTaskDialog(); });
+        v.findViewById(R.id.create_note).setOnClickListener(x -> { s.dismiss(); startActivity(new Intent(this, NoteEditorActivity.class)); });
+        v.findViewById(R.id.create_task).setOnClickListener(x -> { s.dismiss(); showQuickTaskDialog(); });
         s.show();
     }
     
@@ -104,7 +104,6 @@ public class MainActivity extends AppCompatActivity {
         d.setContentView(v);
         EditText input = v.findViewById(R.id.quick_task_input);
         v.findViewById(R.id.btn_add_task).setOnClickListener(x -> {
-            HapticUtils.lightTap(x);
             String t = input.getText().toString().trim();
             if (t.isEmpty()) { Toast.makeText(this, "Enter a task", Toast.LENGTH_SHORT).show(); return; }
             GlobalData.getInstance().addItem(new TodoItem("Task", t, "", System.currentTimeMillis()));
@@ -145,8 +144,8 @@ public class MainActivity extends AppCompatActivity {
         int[] l = new int[2]; anchor.getLocationOnScreen(l);
         pop.showAtLocation(anchor, Gravity.NO_GRAVITY, l[0] - w + anchor.getWidth(), l[1] + anchor.getHeight() + 12);
         LinearLayout rl = pv.findViewById(R.id.sort_latest), ro = pv.findViewById(R.id.sort_oldest);
-        rl.setOnClickListener(v -> { HapticUtils.lightTap(v); mSortLatest = true; applySort(); pop.dismiss(); });
-        ro.setOnClickListener(v -> { HapticUtils.lightTap(v); mSortLatest = false; applySort(); pop.dismiss(); });
+        rl.setOnClickListener(v -> { mSortLatest = true; applySort(); pop.dismiss(); });
+        ro.setOnClickListener(v -> { mSortLatest = false; applySort(); pop.dismiss(); });
     }
     
     private void applySort() { TasksFragment tf = (TasksFragment) pagerAdapter.getFragment(0); if (tf != null) tf.setSort(mSortLatest); }
