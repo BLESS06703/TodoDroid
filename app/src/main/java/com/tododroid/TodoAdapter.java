@@ -21,7 +21,6 @@ public class TodoAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     private boolean hideCompleted = false, sortByLatest = true, cardView = true;
     private SimpleDateFormat timeFmt = new SimpleDateFormat("hh:mm a", Locale.getDefault());
     private SimpleDateFormat dateFmt = new SimpleDateFormat("MMM d, hh:mm a", Locale.getDefault());
-    private SimpleDateFormat dueFmt = new SimpleDateFormat("Due: MMM d, hh:mm a", Locale.getDefault());
     
     public TodoAdapter(ArrayList<TaskItem> items) {
         this.sourceList = items;
@@ -57,14 +56,13 @@ public class TodoAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         HeaderViewHolder(View v) { super(v); headerText = v.findViewById(R.id.header_text); }
     }
     static class TaskViewHolder extends RecyclerView.ViewHolder {
-        TextView taskText, taskTime, taskDue;
+        TextView taskText, taskTime;
         CheckBox checkbox;
         ImageButton btnDelete;
         TaskViewHolder(View v) {
             super(v);
             taskText = v.findViewById(R.id.task_text);
             taskTime = v.findViewById(R.id.task_time);
-            taskDue = v.findViewById(R.id.task_due);
             checkbox = v.findViewById(R.id.checkbox);
             btnDelete = v.findViewById(R.id.btn_delete);
         }
@@ -85,18 +83,6 @@ public class TodoAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         t.taskText.setText(item.getTaskText());
         t.taskTime.setText(formatTime(item.getTimestamp()));
         
-        if (item.hasDueDate()) {
-            t.taskDue.setVisibility(View.VISIBLE);
-            long now = System.currentTimeMillis();
-            if (item.getDueDate() < now && !item.isCompleted()) {
-                t.taskDue.setText("Overdue! " + dueFmt.format(new Date(item.getDueDate())));
-                t.taskDue.setTextColor(0xFFEF4444);
-            } else {
-                t.taskDue.setText(dueFmt.format(new Date(item.getDueDate())));
-                t.taskDue.setTextColor(0xFFF59E0B);
-            }
-        } else { t.taskDue.setVisibility(View.GONE); }
-        
         t.checkbox.setOnCheckedChangeListener(null);
         t.checkbox.setChecked(item.isCompleted());
         t.checkbox.setOnCheckedChangeListener((b, ch) -> {
@@ -105,15 +91,22 @@ public class TodoAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
             else updateAppearance(t, item);
         });
         updateAppearance(t, item);
+        
         t.btnDelete.setOnClickListener(v -> {
-            int p = t.getAdapterPosition();
-            if (p != RecyclerView.NO_POSITION) {
-                TaskItem del = visibleItems.get(p);
-                new AlertDialog.Builder(v.getContext()).setTitle("Delete Task")
+            int adapterPos = t.getAdapterPosition();
+            if (adapterPos != RecyclerView.NO_POSITION) {
+                TaskItem del = visibleItems.get(adapterPos);
+                new AlertDialog.Builder(v.getContext())
+                    .setTitle("Delete Task")
                     .setMessage("Delete \"" + del.getTaskText() + "\"?")
-                    .setPositiveButton("Delete", (d, w) -> { sourceList.remove(del); rebuildVisibleList(); notifyDataSetChanged(); })
+                    .setPositiveButton("Delete", (d, w) -> {
+                        sourceList.remove(del);
                         GlobalData.getInstance().saveToFile(v.getContext());
-                    .setNegativeButton("Cancel", null).show();
+                        rebuildVisibleList();
+                        notifyDataSetChanged();
+                    })
+                    .setNegativeButton("Cancel", null)
+                    .show();
             }
         });
     }
