@@ -4,7 +4,6 @@ import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
 import android.widget.ImageButton;
-import android.widget.TextView;
 import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 
@@ -20,10 +19,10 @@ public class AboutActivity extends AppCompatActivity {
             openLink("https://github.com/BLESS06703"));
         
         findViewById(R.id.link_fb).setOnClickListener(v -> 
-            openLink("https://facebook.com/BLESS06703"));
+            openLink("https://facebook.com/bless.kaundah"));
         
         findViewById(R.id.link_ig).setOnClickListener(v -> 
-            openLink("https://instagram.com/BLESS06703"));
+            openLink("https://instagram.com/bless.kaundah0"));
     }
     
     private void openLink(String url) {
