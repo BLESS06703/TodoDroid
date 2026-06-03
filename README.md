@@ -13,3 +13,7 @@ Get the latest APK from [Releases](https://github.com/BLESS06703/TodoDroid/relea
 
 ## 👤 Built by BLESS SCOTT — Lilongwe, Malawi
 [GitHub](https://github.com/BLESS06703) | [Instagram](https://instagram.com/bless.kaundah0)
+
+## 🎥 Demo
+
+![TodoDroid Demo](demo/tododroid-demo.gif)
