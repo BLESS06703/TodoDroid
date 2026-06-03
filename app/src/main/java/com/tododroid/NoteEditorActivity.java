@@ -20,6 +20,7 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 import androidx.annotation.Nullable;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
 public class NoteEditorActivity extends AppCompatActivity {
@@ -56,6 +57,7 @@ public class NoteEditorActivity extends AppCompatActivity {
         ImageButton btnBack = findViewById(R.id.btn_back);
         TextView btnSave = findViewById(R.id.btn_save);
         ImageButton btnShare = findViewById(R.id.btn_share);
+        ImageButton btnDelete = findViewById(R.id.btn_delete);
         ImageButton micBtn = findViewById(R.id.fmt_mic);
         ImageButton camBtn = findViewById(R.id.fmt_camera);
         
@@ -122,6 +124,22 @@ public class NoteEditorActivity extends AppCompatActivity {
             share.putExtra(Intent.EXTRA_SUBJECT, title);
             share.putExtra(Intent.EXTRA_TEXT, title + "\n\n" + content);
             startActivity(Intent.createChooser(share, "Share Note"));
+        });
+        
+        btnDelete.setOnClickListener(v -> {
+            new AlertDialog.Builder(this)
+                .setTitle("Delete Note")
+                .setMessage("Are you sure you want to delete this note?")
+                .setPositiveButton("Delete", (d, w) -> {
+                    if (noteIndex >= 0) {
+                        GlobalData.getInstance().getItems().remove(noteIndex);
+                        GlobalData.getInstance().saveToFile(NoteEditorActivity.this);
+                    }
+                    Toast.makeText(this, "Note deleted", Toast.LENGTH_SHORT).show();
+                    finish();
+                })
+                .setNegativeButton("Cancel", null)
+                .show();
         });
         
         btnBack.setOnClickListener(v -> finish());

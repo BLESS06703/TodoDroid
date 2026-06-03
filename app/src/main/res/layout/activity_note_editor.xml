@@ -44,6 +44,16 @@
             android:padding="8dp"
             app:tint="#888888" />
 
+        <ImageButton
+            android:id="@+id/btn_delete"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:src="@android:drawable/ic_menu_delete"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="Delete"
+            android:padding="8dp"
+            app:tint="#EF4444" />
+
         <TextView
             android:id="@+id/btn_save"
             android:layout_width="wrap_content"
@@ -208,28 +218,18 @@
             <View android:layout_width="1dp" android:layout_height="24dp" android:background="#333333"
                 android:layout_marginHorizontal="4dp" />
 
-            <ImageButton
-                android:id="@+id/fmt_mic"
-                android:layout_width="40dp"
-                android:layout_height="40dp"
+            <ImageButton android:id="@+id/fmt_mic" android:layout_width="40dp" android:layout_height="40dp"
                 android:src="@android:drawable/ic_btn_speak_now"
                 android:background="?attr/selectableItemBackgroundBorderless"
-                android:contentDescription="Record audio"
-                android:padding="8dp"
-                app:tint="#888888" />
+                android:contentDescription="Speech to text" android:padding="8dp" app:tint="#888888" />
 
             <View android:layout_width="1dp" android:layout_height="24dp" android:background="#333333"
                 android:layout_marginHorizontal="4dp" />
 
-            <ImageButton
-                android:id="@+id/fmt_camera"
-                android:layout_width="40dp"
-                android:layout_height="40dp"
+            <ImageButton android:id="@+id/fmt_camera" android:layout_width="40dp" android:layout_height="40dp"
                 android:src="@android:drawable/ic_menu_camera"
                 android:background="?attr/selectableItemBackgroundBorderless"
-                android:contentDescription="Camera"
-                android:padding="8dp"
-                app:tint="#888888" />
+                android:contentDescription="Camera" android:padding="8dp" app:tint="#888888" />
 
         </LinearLayout>
     </HorizontalScrollView>
